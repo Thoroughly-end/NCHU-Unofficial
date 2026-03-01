@@ -99,4 +99,3 @@ struct ExpandableGlassEffect<Content: View, Label: View>: View, Animatable {
         }
     }
 }
-
