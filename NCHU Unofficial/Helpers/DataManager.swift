@@ -23,24 +23,28 @@ class DataManager: ObservableObject {
     }
     
     @Published var showLoginSheet: Bool = false
+    @Published var hasFullCookies: Bool = false
     
     func logout() {
         isLoggedIn = false
         CookieManager.shared.clearCookies()
     }
+    
+    
+    
 }
 
 
 struct ScheduleWrapper: RawRepresentable {
-    var items: [String]
+    var items: [ScheduleData]
     
-    init(items: [String]) {
+    init(items: [ScheduleData]) {
         self.items = items
     }
     
     init?(rawValue: String) {
         guard let data = rawValue.data(using: .utf8),
-              let decoded = try? JSONDecoder().decode([String].self, from: data) else {
+              let decoded = try? JSONDecoder().decode([ScheduleData].self, from: data) else {
             return nil
         }
         self.items = decoded
@@ -52,5 +56,49 @@ struct ScheduleWrapper: RawRepresentable {
             return "[]"
         }
         return string
+    }
+}
+
+struct ScheduleData: Codable {
+    var name: String?
+    var teacher: String?
+    var location: String?
+    
+    init(text: String) {
+        if text == "nil" {
+            name = nil
+            teacher = nil
+            location = nil
+            return
+        }
+        let data = text.split(separator: "\n")
+        
+        if data.isEmpty {
+            name = nil
+            teacher = nil
+            location = nil
+        } else if data.count == 1 {
+            name = String(data[0]).removingBracket()
+            teacher = nil
+            location = nil
+        } else if data.count == 2 {
+            name = String(data[0]).removingBracket()
+            teacher = String(data[1])
+            location = nil
+        } else {
+            name = String(data[0]).removingBracket()
+            teacher = String(data[1])
+            location = String(data[2])
+        }
+    }
+    
+}
+
+extension String {
+    func removingBracket() -> String {
+        if let firstPart = self.split(separator: "(").first {
+            return String(firstPart).trimmingCharacters(in: .whitespaces)
+        }
+        return self
     }
 }

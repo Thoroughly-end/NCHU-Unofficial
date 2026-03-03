@@ -24,6 +24,8 @@ class SessionManager {
             
             if let responseURL = httpResponse.url?.absoluteString, responseURL.contains("https://ccidp.nchu.edu.tw/login") {
                 print("Redirecte to SSO page. Session expire")
+                CookieManager.shared.clearCookies()
+                
                 DispatchQueue.main.async { completion(false) }
                 
             } else if httpResponse.statusCode == 200 {
@@ -32,6 +34,7 @@ class SessionManager {
                 
             } else {
                 print("Server reject：\(httpResponse.statusCode)")
+                CookieManager.shared.clearCookies()
                 DispatchQueue.main.async { completion(false) }
             }
         }

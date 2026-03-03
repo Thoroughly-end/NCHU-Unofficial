@@ -38,30 +38,25 @@ struct ContentView: View {
             Color(backgroundColor).ignoresSafeArea()
             
             
-            VStack(spacing: 0) {
-                switch activeTab {
-                case .schedule:
-                    Schedule()
-                case .reminders:
-                    Reminders()
-                case .courses:
-                    Courses()
-                case .settings:
-                    Settings()
-                }
-                
-                
+            switch activeTab {
+            case .schedule:
+                Schedule()
+            case .reminders:
+                Reminders()
+            case .courses:
+                Courses()
+            case .settings:
+                Settings()
+            }
+            VStack {
                 Spacer()
-                
-                ZStack(alignment: .bottom) {
-                    MorphingTabBar(activeTab: $activeTab, isExpanded: $isExpanded) {
-                        
-                    }
-                    .padding(.horizontal, 20)
+                MorphingTabBar(activeTab: $activeTab, isExpanded: $isExpanded) {
                     
                 }
-                .ignoresSafeArea(.all, edges: .bottom)
+                .padding(.horizontal, 20)
             }
+            .padding(.bottom, 20)
+            .ignoresSafeArea(.all , edges: .bottom)
         }
         .onAppear() {
             if dataManager.isLoggedIn == false {

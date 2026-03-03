@@ -12,7 +12,7 @@ import WebKit
 class ScheduleScraper {
     static let shared = ScheduleScraper()
     
-    func fetchSchedule() async -> [String]? {
+    func fetchSchedule() async -> [ScheduleData]? {
         guard let url = URL(string: "https://cportal.nchu.edu.tw/cofsys/plsql/vocscrd_table") else { return nil }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -44,22 +44,27 @@ class ScheduleScraper {
         }
     }
     
-    private func parseHTML(_ html: String) throws -> [String] {
-        var result: [String] = []
+    private func parseHTML(_ html: String) throws -> [ScheduleData] {
+        var result: [ScheduleData] = []
         let document = try SwiftSoup.parse(html)
         print(try document.select("table").size())
-        let table = try document.select("table")[1]
-        let rows = try table.select("tr")
+        let tables = try document.select("table")
         
-        for i in 1..<rows.count {
-            let cells = try rows[i].select("td")
-            
-            for j in 1..<cells.count {
-                let innerText = try cells[j].text()
-                if innerText.isEmpty {
-                    result.append("nil")
+        guard tables.count > 1 else {
+            print("Can not find schedule")
+            return result
+        }
+        let table = tables[1]
+        
+        let rows = try table.select("tr").array()
+        for row in rows.dropFirst() {
+            let cells = try row.select("td").array()
+            for cell in cells.dropFirst() {
+                let cleanText = try cell.text().trimmingCharacters(in: .whitespacesAndNewlines)
+                if cleanText.isEmpty {
+                    result.append(ScheduleData(text: "nil"))
                 } else {
-                    result.append(innerText)
+                    result.append(ScheduleData(text: cleanText))
                 }
             }
         }
@@ -72,20 +77,41 @@ class ScheduleScraperPrepare: NSObject, WKNavigationDelegate {
     static let shared = ScheduleScraperPrepare()
     
     private var hiddenWebView: WKWebView!
-    private var onReady: (() -> Void)?
+    private var onResult: ((Bool) -> Void)?
+    private var timeoutTimer: Timer?
     
     private override init() {
         super.init()
-        self.hiddenWebView = WKWebView()
+        let config = WKWebViewConfiguration()
+        self.hiddenWebView = WKWebView(frame: .zero, configuration: config)
+        self.hiddenWebView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
         self.hiddenWebView.navigationDelegate = self
     }
     
-    func fetchRequiredCookie(completion: @escaping () -> Void) {
+    func fetchRequiredCookie(completion: @escaping (Bool) -> Void) {
         print("Start CAS process...")
-        self.onReady = completion
+        self.onResult = completion
+        
+        timeoutTimer?.invalidate()
+        timeoutTimer = Timer.scheduledTimer(withTimeInterval: 15.0, repeats: false) { [weak self] _ in
+            print("⏰ [WebView] 闖關逾時，判定為失敗")
+            self?.finish(success: false)
+        }
         
         if let url = URL(string: "https://cportal.nchu.edu.tw/cas_login/acad?p_subname=vocscrd_table") {
             hiddenWebView.load(URLRequest(url: url))
+        }
+        
+    }
+    
+    private func finish(success: Bool) {
+        timeoutTimer?.invalidate()
+        timeoutTimer = nil
+        let callback = onResult
+        onResult = nil
+        
+        DispatchQueue.main.async {
+            callback?(success)
         }
     }
     
@@ -104,11 +130,20 @@ class ScheduleScraperPrepare: NSObject, WKNavigationDelegate {
             WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
                 CookieManager.shared.saveCookies(cookies)
                 print("Got \(cookies.count) Cookies")
-                for cookie in cookies {
-                    print("   - \(cookie.name)")
+                let hasTS = cookies.contains { $0.name.starts(with: "TS") }
+                                
+                if hasTS {
+                    CookieManager.shared.saveCookies(cookies)
+                    print("Successfully got TS Cookie！")
+                    self.finish(success: true)
+                } else {
+                    print("Reached the final destination but no TS Cookie...")
                 }
                 
-                self.onReady?()
+                for cookie in cookies {
+                    HTTPCookieStorage.shared.setCookie(cookie)
+                    print("   - \(cookie.name)")
+                }
             }
             
         } else if url.contains("ccidp.nchu.edu.tw/login") {
@@ -126,5 +161,20 @@ class ScheduleScraperPrepare: NSObject, WKNavigationDelegate {
         }
         
         decisionHandler(.allow)
+    }
+    
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        print("Loading web page failed：\(error.localizedDescription)")
+        finish(success: false)
+    }
+    
+    func setupHiddenWebView(in window: UIWindow?) {
+        guard let window = window else { return }
+        
+        hiddenWebView.frame = CGRect(x: 0, y: 0, width: 1, height: 1)
+        hiddenWebView.alpha = 0.0
+        hiddenWebView.isUserInteractionEnabled = false
+        
+        window.addSubview(hiddenWebView)
     }
 }
