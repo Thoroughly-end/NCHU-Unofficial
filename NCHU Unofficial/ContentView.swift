@@ -27,7 +27,7 @@ struct ContentView: View {
     @State private var isExpanded: Bool = false
     
     @Environment(\.colorScheme) var colorScheme
-    @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var dataManager: DataManager
     
     
     var body: some View {
@@ -64,11 +64,11 @@ struct ContentView: View {
             }
         }
         .onAppear() {
-            if authManager.isLoggedIn == false {
-                authManager.showLoginSheet = true
+            if dataManager.isLoggedIn == false {
+                dataManager.showLoginSheet = true
             }
         }
-        .sheet(isPresented: $authManager.showLoginSheet) {
+        .sheet(isPresented: $dataManager.showLoginSheet) {
             LoginSheetView()
         }
     }
@@ -76,6 +76,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AuthManager())
+        .environmentObject(DataManager())
 }
 

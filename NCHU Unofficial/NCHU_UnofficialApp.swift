@@ -9,7 +9,7 @@ import SwiftUI
 
 @main
 struct NCHU_UnofficialApp: App {
-    @StateObject private var authManager = AuthManager()
+    @StateObject private var dataManager = DataManager()
     
     init() {
         CookieManager.shared.loadCookies()
@@ -18,7 +18,7 @@ struct NCHU_UnofficialApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(authManager)
+                .environmentObject(dataManager)
         }
     }
 }

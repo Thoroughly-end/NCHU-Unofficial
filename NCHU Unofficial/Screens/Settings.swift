@@ -80,5 +80,5 @@ struct Settings: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AuthManager())
+        .environmentObject(DataManager())
 }

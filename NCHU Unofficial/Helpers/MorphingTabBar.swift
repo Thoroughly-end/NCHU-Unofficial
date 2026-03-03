@@ -111,4 +111,5 @@ fileprivate struct CustomTabBar: UIViewRepresentable {
 
 #Preview {
     ContentView()
-    .environmentObject(AuthManager())}
+        .environmentObject(DataManager())
+}

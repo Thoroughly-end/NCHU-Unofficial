@@ -10,7 +10,7 @@ import WebKit
 
 struct Account: View {
     @Environment(\.colorScheme) var colorScheme
-    @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var dataManager: DataManager
     
     var body: some View {
         @State var backgroundColor: Color = colorScheme  == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
@@ -20,12 +20,12 @@ struct Account: View {
             Color(backgroundColor).ignoresSafeArea()
             VStack(spacing: 20) {
                 HStack {
-                    if authManager.isLoggedIn == false {
+                    if dataManager.isLoggedIn == false {
                         Image(systemName: "person.crop.circle")
                             .font(.title)
                             .padding(.vertical)
                         Spacer()
-                        Button(action: {authManager.showLoginSheet = true}) {
+                        Button(action: {dataManager.showLoginSheet = true}) {
                             Text("Sign In")
                                 .font(.title2)
                                 .foregroundStyle(Color(textColor))
@@ -39,7 +39,7 @@ struct Account: View {
                             .font(.title)
                             .padding(.vertical)
                         Spacer()
-                        Button(action: authManager.logout) {
+                        Button(action: dataManager.logout) {
                             Text("Sign Out")
                                 .font(.title2)
                                 .foregroundStyle(Color(textColor))
@@ -63,5 +63,5 @@ struct Account: View {
 
 #Preview {
     Account()
-        .environmentObject(AuthManager())
+        .environmentObject(DataManager())
 }
