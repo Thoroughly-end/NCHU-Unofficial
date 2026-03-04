@@ -11,34 +11,27 @@ struct Card: View {
     let course: ScheduleData
     
     var body: some View {
-        // 不需要 ZStack 鋪底色了！直接讓 VStack 加上玻璃效果即可
         HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 10) {
                 let name = course.name == nil ? "" : "\(course.name!) "
-                let teacher = course.teacher == nil ? "" : "\(course.teacher!) "
                 let location = course.location == nil ? "" : "\(course.location!) "
                 
                 Group {
                     Text(name)
                         .font(.system(size: 15))
                     
-                    Text(teacher)
-                        .font(.system(size: 10))
-                    
                     Text(location)
                         .font(.system(size: 10))
                 }
-                // 使用 .primary，系統會自動處理：亮色模式=黑字，深色模式=白字
                 .foregroundColor(.primary)
-                .multilineTextAlignment(.trailing)
-                .padding(.horizontal, 15)
+                .multilineTextAlignment(.leading)
+                .padding(.horizontal, 12)
             }
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            // 讓玻璃效果直接覆蓋在內容上，透出母視圖的背景
             .glassEffect()
         }
-        .frame(maxWidth: 60, maxHeight: 200)
+        .frame(maxWidth: 70, maxHeight: 200)
     }
 }
 
@@ -49,7 +42,6 @@ struct DayCard: View {
     
     var body: some View {
         @State var backgroundColor: Color = colorScheme  == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
-        @State var textColor: Color = colorScheme == .dark ? Color.white : Color.black
         HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: 8) {
                 Group {
@@ -74,7 +66,7 @@ struct DayCard: View {
                 }
                 .foregroundStyle(.primary)
                 .font(.system(size: 15))
-                .multilineTextAlignment(.trailing)
+                .multilineTextAlignment(.center)
                 
                 
             }
@@ -82,7 +74,7 @@ struct DayCard: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .glassEffect()
         }
-        .frame(width: 60, height: 60)
+        .frame(width: 70, height: 70)
     }
 }
 
@@ -93,7 +85,6 @@ struct TimeCard: View {
     
     var body: some View {
         @State var backgroundColor: Color = colorScheme  == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
-        @State var textColor: Color = colorScheme == .dark ? Color.white : Color.black
         HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: 8) {
                 Group {
@@ -160,11 +151,12 @@ struct TimeCard: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .glassEffect()
         }
-        .frame(maxWidth: 60, maxHeight: 200)
+        .frame(maxWidth: 70, maxHeight: 200)
     }
 }
 
 
 #Preview {
     Schedule()
+        .environmentObject(DataManager())
 }

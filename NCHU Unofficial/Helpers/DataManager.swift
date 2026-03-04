@@ -71,7 +71,7 @@ struct ScheduleData: Codable {
             location = nil
             return
         }
-        let data = text.split(separator: "\n")
+        let data = text.split(separator: " ")
         
         if data.isEmpty {
             name = nil

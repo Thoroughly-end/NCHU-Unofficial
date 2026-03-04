@@ -60,7 +60,8 @@ class ScheduleScraper {
         for row in rows.dropFirst() {
             let cells = try row.select("td").array()
             for cell in cells.dropFirst() {
-                let cleanText = try cell.text().trimmingCharacters(in: .whitespacesAndNewlines)
+                let cleanText = try cell.text()
+                print(cleanText)
                 if cleanText.isEmpty {
                     result.append(ScheduleData(text: "nil"))
                 } else {

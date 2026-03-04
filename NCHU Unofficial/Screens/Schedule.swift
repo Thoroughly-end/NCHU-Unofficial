@@ -14,9 +14,15 @@ struct Schedule: View {
     @EnvironmentObject var dataManager: DataManager
     @Environment(\.colorScheme) var colorScheme
     
+    var backgroundColor: Color {
+        colorScheme == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
+    }
+    
+    init() {
+        UIScrollView.appearance().bounces = false
+    }
+    
     var body: some View {
-        @State var backgroundColor: Color = colorScheme  == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
-        @State var textColor: Color = colorScheme == .dark ? Color.white : Color.black
         VStack {
             if isCheckingSession {
                 ProgressView("Checking Session")
@@ -24,94 +30,126 @@ struct Schedule: View {
                 if isLoggedIn {
                     let days = 0..<8
                     let times = 1..<14
-                    //Text("You have logged in")
+                    
                     if scheduleList.items.count < 91 {
-                        Text("no enough data")
+                        Text("Not enough data")
                     } else {
                         VStack(alignment: .leading) {
-                            Text("My Schedule")
-                                .font(.system(size: 34, weight: .black, design: .rounded))
-                                .foregroundColor(textColor)
-                                .padding(.horizontal)
-                                .padding(.top, 20)
+                            HStack {
+                                Text("My Schedule")
+                                    .font(.system(size: 34, weight: .black, design: .rounded))
+                                    .foregroundColor(Color.primary)
+                                    .padding(.horizontal)
+                                    .padding(.top, 20)
+                                Spacer()
+                                
+                                Button {
+                                    manualRefresh()
+                                } label: {
+                                    VStack(alignment: .center) {
+                                        Image(systemName: "arrow.trianglehead.counterclockwise")
+                                            .font(.title3)
+                                            .padding(.horizontal)
+                                            .foregroundStyle(Color.primary)
+                                    }
+                                    .frame(width: 60, height: 60)
+                                    .glassEffect()
+                                    .padding(.horizontal)
+                                    .padding(.top, 20)
+                                }
+                            }
+                            .padding(.bottom, -20)
+                            
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(alignment: .top, spacing: 10) {
                                     ForEach(days, id: \.self) { day in
                                         DayCard(day: day)
+                                            .padding(.top, 20)
                                     }
                                 }
                                 ScrollView(.vertical, showsIndicators: false) {
                                     ForEach(times, id: \.self) { time in
                                         HStack (alignment: .top, spacing: 10) {
                                             TimeCard(time: time)
+                                                .glassEffect()
                                             ForEach(days, id: \.self) { day in
-                                                if !(day == 0) {
+                                                if day != 0 {
                                                     Card(course: scheduleList.items[(time - 1) * 7 + day - 1])
                                                 }
-                                                
-                                                
                                             }
                                         }
                                     }
+                                    VStack {}.frame(height: 70)
                                 }
                             }
+                            .ignoresSafeArea()
                             Spacer()
                         }
                     }
-                    
                 } else {
-                    
-                    
-                    Text("You are not logging in")
-                    
-                    
+                    Text("Please login")
                 }
             }
         }
-        .onAppear() {
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene, let window = windowScene.windows.first {
-                ScheduleScraperPrepare.shared.setupHiddenWebView(in: window)
-            }
-            
-            if isLoggedIn {
-                isCheckingSession = true
-                SessionManager.shared.verifyCookieStatus { isValid in
-                    isCheckingSession = false
-                    if isValid {
-                        print("Valid Session")
-                        if !dataManager.hasFullCookies {
-                            ScheduleScraperPrepare.shared.fetchRequiredCookie { success in
-                                if success {
-                                    Task {
-                                        dataManager.hasFullCookies = true
-                                        let schedule = await ScheduleScraper.shared.fetchSchedule()
-                                        if (schedule == nil) {
-                                            scheduleList.items = []
-                                        } else {
-                                            scheduleList.items = schedule!
-                                        }
-                                    }
-                                } else {
-                                    isCheckingSession = false
-                                }
+        .onAppear {
+            setupHiddenWebView()
+            initialLoadIfNeeded()
+        }
+    }
+    
+    private func setupHiddenWebView() {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            ScheduleScraperPrepare.shared.setupHiddenWebView(in: window)
+        }
+    }
+    
+    private func initialLoadIfNeeded() {
+        guard isLoggedIn else { return }
+        
+        if dataManager.hasFullCookies {
+            return
+        }
+        
+        isCheckingSession = true
+        SessionManager.shared.verifyCookieStatus { isValid in
+            if isValid {
+                print("Session is valid, start to fetch schedule")
+                ScheduleScraperPrepare.shared.fetchRequiredCookie { success in
+                    if success {
+                        Task {
+                            dataManager.hasFullCookies = true
+                            if let schedule = await ScheduleScraper.shared.fetchSchedule() {
+                                scheduleList.items = schedule
+                            } else {
+                                scheduleList.items = []
                             }
+                            isCheckingSession = false
                         }
-                        
-                    }
-                    else {
-                        if isLoggedIn {
-                            isLoggedIn = false
-                        }
-                        print("Session Expired")
+                    } else {
+                        print("Can not fetch full cookie")
+                        isCheckingSession = false
                     }
                 }
+            } else {
+                print("Session expired")
+                isLoggedIn = false
+                dataManager.logout()
+                isCheckingSession = false
             }
         }
     }
-}
-
-
-#Preview {
-    Schedule()
-        .environmentObject(DataManager())
+    
+    private func manualRefresh() {
+        guard isLoggedIn && dataManager.hasFullCookies else { return }
+        
+        Task {
+            if let newSchedule = await ScheduleScraper.shared.fetchSchedule() {
+                scheduleList.items = newSchedule
+                print("Manual refresh schedule successfully")
+            } else {
+                scheduleList.items = []
+            }
+        }
+    }
 }
