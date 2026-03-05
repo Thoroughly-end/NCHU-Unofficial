@@ -82,7 +82,9 @@ struct LoginSheetView: View {
     
     private func fetchAllSystemCookies() async {
         let cportalSuccess = await withCheckedContinuation { continuation in
+            dataManager.hasCportalCookies = true
             ScheduleScraperPrepare.shared.fetchRequiredCookie { success in
+                dataManager.hasiLearningCookies = true
                 continuation.resume(returning: success)
             }
         }

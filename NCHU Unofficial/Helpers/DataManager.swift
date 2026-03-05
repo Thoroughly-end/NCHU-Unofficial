@@ -25,6 +25,7 @@ class DataManager: ObservableObject {
     @Published var showLoginSheet: Bool = false
     @Published var hasCportalCookies: Bool = false
     @Published var hasiLearningCookies: Bool = false
+    @Published var courses: [CourseData] = []
     
     func logout() {
         isLoggedIn = false
@@ -101,5 +102,39 @@ extension String {
             return String(firstPart).trimmingCharacters(in: .whitespaces)
         }
         return self
+    }
+}
+
+class AnnouncementData {
+    var courseID: Int
+    var title: String
+    var url: String
+    var content: String?
+    
+    init(courseID: Int, title: String, url: String) {
+        self.courseID = courseID
+        self.title = title
+        self.url = url
+        self.content = nil
+    }
+    
+    func setContent(_ content: String) {
+        self.content = content
+    }
+}
+
+class CourseData {
+    var id: Int
+    var name: String
+    var announcements: [AnnouncementData]
+    
+    init(id: Int, name: String) {
+        self.id = id
+        self.name = name
+        self.announcements = []
+    }
+    
+    func addAnnouncement(_ announcement: AnnouncementData) {
+        self.announcements.append(announcement)
     }
 }

@@ -92,23 +92,24 @@ struct Schedule: View {
             }
         }
         .onAppear {
-            initialLoadIfNeeded()
+            initialLoad()
         }
     }
     
-    private func initialLoadIfNeeded() {
+    private func initialLoad() {
         guard isLoggedIn else { return }
+        guard dataManager.hasCportalCookies else { return }
         
-        if dataManager.hasCportalCookies {
+        if !scheduleList.items.isEmpty {
             return
         }
         
         isCheckingSession = true
         SessionManager.shared.verifyCookieStatus { isValid in
             if isValid {
-                print("Session is valid, start to fetch schedule")
-                Task {
-                    dataManager.hasCportalCookies = true
+                print("Session valid, Start to fetch schedule")
+                
+                Task { @MainActor in
                     if let schedule = await ScheduleScraper.shared.fetchSchedule() {
                         scheduleList.items = schedule
                     } else {
@@ -117,10 +118,12 @@ struct Schedule: View {
                     isCheckingSession = false
                 }
             } else {
-                print("Session expired")
-                isLoggedIn = false
-                dataManager.logout()
-                isCheckingSession = false
+                print("Session expired, please login again")
+                DispatchQueue.main.async {
+                    isLoggedIn = false
+                    dataManager.logout()
+                    isCheckingSession = false
+                }
             }
         }
     }
