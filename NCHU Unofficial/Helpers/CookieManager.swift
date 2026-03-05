@@ -11,74 +11,66 @@ import WebKit
 class CookieManager {
     static let shared = CookieManager()
     
-    // 定義我們保險箱的標籤
-    private let serviceName = "com.nchu.unofficial"
-    private let accountName = "SSOCookies"
+    private let cookieKey = "saved_nchu_cookies"
     
-    // 📦 1. 存入 Keychain
     func saveCookies(_ cookies: [HTTPCookie]) {
-        var cookieDicts: [[String: Any]] = []
+        var finalCookies: [HTTPCookie] = []
+        
         for cookie in cookies {
-            if let properties = cookie.properties {
-                var stringDict: [String: Any] = [:]
-                for (key, value) in properties {
-                    stringDict[key.rawValue] = value
-                }
-                cookieDicts.append(stringDict)
+            var properties = cookie.properties ?? [:]
+            
+            if properties[.expires] == nil {
+                properties[.expires] = Date().addingTimeInterval(60 * 60 * 24 * 30)
+            }
+            
+            if let newCookie = HTTPCookie(properties: properties) {
+                finalCookies.append(newCookie)
+            } else {
+                finalCookies.append(cookie)
             }
         }
         
-        // ⭐️ 把字典轉成二進位 Data，然後鎖進 Keychain！
         do {
-            let data = try JSONSerialization.data(withJSONObject: cookieDicts, options: [])
-            KeychainHelper.shared.save(data, service: serviceName, account: accountName)
-            print("🛡️ 成功將 \(cookies.count) 個 Cookie 安全鎖入 Keychain！")
+            let data = try NSKeyedArchiver.archivedData(withRootObject: finalCookies, requiringSecureCoding: false)
+            UserDefaults.standard.set(data, forKey: cookieKey)
+            print("Store \(finalCookies.count) Cookies successfully.")
         } catch {
-            print("❌ Cookie 轉碼失敗：\(error)")
+            print("failed to store cookies: \(error.localizedDescription)")
         }
     }
     
-    // 🪄 2. 從 Keychain 讀取
     func loadCookies() {
-        // ⭐️ 從 Keychain 拿出二進位 Data
-        guard let data = KeychainHelper.shared.read(service: serviceName, account: accountName) else {
-            print("⚠️ Keychain 裡沒有儲存的 Cookie")
+        guard let data = UserDefaults.standard.data(forKey: cookieKey) else {
+            print("Can not find saved cookies.")
             return
         }
         
         do {
-            // 將 Data 解碼回字典陣列
-            if let cookieDicts = try JSONSerialization.jsonObject(with: data, options: []) as? [[String: Any]] {
-                var loadedCount = 0
-                for stringDict in cookieDicts {
-                    var properties: [HTTPCookiePropertyKey: Any] = [:]
-                    for (key, value) in stringDict {
-                        properties[HTTPCookiePropertyKey(rawValue: key)] = value
-                    }
-                    
-                    if let cookie = HTTPCookie(properties: properties) {
-                        HTTPCookieStorage.shared.setCookie(cookie)
-                        loadedCount += 1
-                    }
+            let unarchiver = try NSKeyedUnarchiver(forReadingFrom: data)
+            
+            unarchiver.requiresSecureCoding = false
+            
+            if let cookies = unarchiver.decodeObject(forKey: NSKeyedArchiveRootObjectKey) as? [HTTPCookie] {
+                for cookie in cookies {
+                    HTTPCookieStorage.shared.setCookie(cookie)
                 }
-                print("🛡️ 成功從 Keychain 還原 \(loadedCount) 個 Cookie！")
+                print("Successfully loaded \(cookies.count) Cookies")
             }
+            
+            unarchiver.finishDecoding()
+            
         } catch {
-            print("❌ Keychain Cookie 解碼失敗：\(error)")
+            print("failed to load cookies: \(error.localizedDescription)")
         }
     }
     
-    // 🗑️ 3. 登出時清空
     func clearCookies() {
-        // 清除硬碟裡的
-        KeychainHelper.shared.delete(service: serviceName, account: accountName)
-        
-        // 清除記憶體裡的
+        UserDefaults.standard.removeObject(forKey: cookieKey)
         if let cookies = HTTPCookieStorage.shared.cookies {
             for cookie in cookies {
                 HTTPCookieStorage.shared.deleteCookie(cookie)
             }
         }
-        print("🗑️ 已徹底銷毀所有 Cookie 憑證！")
+        print("Clear all Cookies")
     }
 }

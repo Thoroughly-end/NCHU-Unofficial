@@ -12,7 +12,6 @@ class KeychainHelper {
     static let shared = KeychainHelper()
     private init() {}
     
-    // 🔒 存入保險箱
     func save(_ data: Data, service: String, account: String) {
         let query = [
             kSecValueData: data,
@@ -21,7 +20,6 @@ class KeychainHelper {
             kSecAttrAccount: account
         ] as CFDictionary
         
-        // 嘗試新增。如果遇到重複的 (errSecDuplicateItem)，就改用更新的方式
         let status = SecItemAdd(query, nil)
         if status == errSecDuplicateItem {
             let updateQuery = [
@@ -35,7 +33,6 @@ class KeychainHelper {
         }
     }
     
-    // 🔓 從保險箱讀取
     func read(service: String, account: String) -> Data? {
         let query = [
             kSecClass: kSecClassGenericPassword,
@@ -54,7 +51,6 @@ class KeychainHelper {
         return nil
     }
     
-    // 🗑️ 銷毀機密資料 (登出時使用)
     func delete(service: String, account: String) {
         let query = [
             kSecClass: kSecClassGenericPassword,

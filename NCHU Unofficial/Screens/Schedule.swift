@@ -92,22 +92,14 @@ struct Schedule: View {
             }
         }
         .onAppear {
-            setupHiddenWebView()
             initialLoadIfNeeded()
-        }
-    }
-    
-    private func setupHiddenWebView() {
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first {
-            ScheduleScraperPrepare.shared.setupHiddenWebView(in: window)
         }
     }
     
     private func initialLoadIfNeeded() {
         guard isLoggedIn else { return }
         
-        if dataManager.hasFullCookies {
+        if dataManager.hasCportalCookies {
             return
         }
         
@@ -115,21 +107,14 @@ struct Schedule: View {
         SessionManager.shared.verifyCookieStatus { isValid in
             if isValid {
                 print("Session is valid, start to fetch schedule")
-                ScheduleScraperPrepare.shared.fetchRequiredCookie { success in
-                    if success {
-                        Task {
-                            dataManager.hasFullCookies = true
-                            if let schedule = await ScheduleScraper.shared.fetchSchedule() {
-                                scheduleList.items = schedule
-                            } else {
-                                scheduleList.items = []
-                            }
-                            isCheckingSession = false
-                        }
+                Task {
+                    dataManager.hasCportalCookies = true
+                    if let schedule = await ScheduleScraper.shared.fetchSchedule() {
+                        scheduleList.items = schedule
                     } else {
-                        print("Can not fetch full cookie")
-                        isCheckingSession = false
+                        scheduleList.items = []
                     }
+                    isCheckingSession = false
                 }
             } else {
                 print("Session expired")
@@ -141,7 +126,7 @@ struct Schedule: View {
     }
     
     private func manualRefresh() {
-        guard isLoggedIn && dataManager.hasFullCookies else { return }
+        guard isLoggedIn && dataManager.hasCportalCookies else { return }
         
         Task {
             if let newSchedule = await ScheduleScraper.shared.fetchSchedule() {
@@ -149,6 +134,7 @@ struct Schedule: View {
                 print("Manual refresh schedule successfully")
             } else {
                 scheduleList.items = []
+                print("Failure in manual refresh")
             }
         }
     }

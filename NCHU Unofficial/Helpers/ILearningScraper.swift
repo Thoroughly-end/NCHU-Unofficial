@@ -1,81 +1,16 @@
 //
-//  ScheduleScraper.swift
+//  ILearningScraper.swift
 //  NCHU Unofficial
 //
-//  Created by 郭家駿 on 2026/3/3.
+//  Created by 郭家駿 on 2026/3/5.
 //
 
+import WebKit
 import Foundation
 import SwiftSoup
-import WebKit
 
-class ScheduleScraper {
-    static let shared = ScheduleScraper()
-    
-    func fetchSchedule() async -> [ScheduleData]? {
-        guard let url = URL(string: "https://cportal.nchu.edu.tw/cofsys/plsql/vocscrd_table") else { return nil }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        
-        let safariUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
-            request.setValue(safariUserAgent, forHTTPHeaderField: "User-Agent")
-        
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                print("Server rejected or session expired")
-                return nil
-            }
-            print("URLSession finally go to：\(httpResponse.url?.absoluteString ?? "")")
-            
-            guard let htmlString = String(data: data, encoding: .utf8) else {
-                print("HTML decoding failed")
-                return nil
-            }
-            
-            //print("HTML：\n\(htmlString)")
-            
-            let result = try parseHTML(htmlString)
-            return result
-        } catch {
-            print("Request failed: \(error.localizedDescription)")
-            return nil
-        }
-    }
-    
-    private func parseHTML(_ html: String) throws -> [ScheduleData] {
-        var result: [ScheduleData] = []
-        let document = try SwiftSoup.parse(html)
-        //print(try document.select("table").size())
-        let tables = try document.select("table")
-        
-        guard tables.count > 1 else {
-            print("Can not find schedule")
-            return result
-        }
-        let table = tables[1]
-        
-        let rows = try table.select("tr").array()
-        for row in rows.dropFirst() {
-            let cells = try row.select("td").array()
-            for cell in cells.dropFirst() {
-                let cleanText = try cell.text()
-                //print(cleanText)
-                if cleanText.isEmpty {
-                    result.append(ScheduleData(text: "nil"))
-                } else {
-                    result.append(ScheduleData(text: cleanText))
-                }
-            }
-        }
-        return result
-    }
-    
-}
-
-class ScheduleScraperPrepare: NSObject, WKNavigationDelegate {
-    static let shared = ScheduleScraperPrepare()
+class ILearningScraperPrepare: NSObject, WKNavigationDelegate {
+    static let shared = ILearningScraperPrepare()
     
     private var hiddenWebView: WKWebView!
     private var onResult: ((Bool) -> Void)?
@@ -97,10 +32,9 @@ class ScheduleScraperPrepare: NSObject, WKNavigationDelegate {
             self?.finish(success: false)
         }
         
-        if let url = URL(string: "https://cportal.nchu.edu.tw/cas_login/acad?p_subname=vocscrd_table") {
+        if let url = URL(string: "https://lms2020.nchu.edu.tw/sys/oitc/oa_redirect.php") {
             botWebView.load(URLRequest(url: url))
         }
-        
     }
     
     private func finish(success: Bool) {
@@ -118,10 +52,8 @@ class ScheduleScraperPrepare: NSObject, WKNavigationDelegate {
         guard let url = webView.url?.absoluteString else { return }
         print("Go to: \(url)")
         
-        let isFinalDestination = (url.contains("vocscrd_table") || url.contains("stud_subframeset1"))
-                                 && url.contains("cofsys/plsql/")
-                                 && !url.contains("cas_login")
-                                 && !url.contains("cof_ssologin")
+        let isFinalDestination = url.contains("lms2020.nchu.edu.tw") && url.contains("dashboard")
+        && !url.contains("ccidp.nchu.edu.tw") && !url.contains("cas_login")
         
         if isFinalDestination {
             print("Reach the final destination!")

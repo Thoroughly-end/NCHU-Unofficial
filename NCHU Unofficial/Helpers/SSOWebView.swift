@@ -19,8 +19,15 @@ struct SSOWebView: UIViewRepresentable {
     }
     
     func makeUIView(context: Context) -> WKWebView {
-        let webView = WKWebView()
+        let webView = SharedWebBot.shared.webView
         webView.navigationDelegate = context.coordinator
+        webView.alpha = 1.0
+        webView.isUserInteractionEnabled = true
+        
+        if let url = URL(string: targetURLString) {
+            webView.load(URLRequest(url: url))
+        }
+        
         return webView
     }
     

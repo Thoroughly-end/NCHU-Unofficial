@@ -23,7 +23,8 @@ class DataManager: ObservableObject {
     }
     
     @Published var showLoginSheet: Bool = false
-    @Published var hasFullCookies: Bool = false
+    @Published var hasCportalCookies: Bool = false
+    @Published var hasiLearningCookies: Bool = false
     
     func logout() {
         isLoggedIn = false

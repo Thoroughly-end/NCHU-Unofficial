@@ -57,6 +57,7 @@ struct AboutThisAPP: View {
                         Spacer()
                         Text("allenkuo0818@gmail.com")
                             .padding(.trailing, 30)
+                            .foregroundStyle(Color.blue)
                     }
                     .frame(height: 100, alignment: .center)
                     .padding(.top, -20)

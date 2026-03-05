@@ -59,6 +59,10 @@ struct ContentView: View {
             .ignoresSafeArea(.all , edges: .bottom)
         }
         .onAppear() {
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene, let window = windowScene.windows.first {
+                SharedWebBot.shared.attachToWindow(window)
+            }
+            
             if dataManager.isLoggedIn == false {
                 dataManager.showLoginSheet = true
             }
