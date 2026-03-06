@@ -35,7 +35,7 @@ struct AnnouncementsCard: View {
                 .frame(maxHeight: .infinity)
             }
             .glassEffect(.regular.interactive())
-            .frame(width: .infinity, height: 120)
+            .frame(maxWidth: .infinity, minHeight: 120)
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
             .contentShape(Rectangle())
