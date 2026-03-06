@@ -12,7 +12,6 @@ struct Settings: View {
     
     var body: some View {
         @State var backgroundColor: Color = colorScheme  == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
-        @State var textColor: Color = colorScheme == .dark ? Color.white : Color.black
         NavigationView {
             ZStack {
                 Color(backgroundColor).ignoresSafeArea()
@@ -43,7 +42,7 @@ struct Settings: View {
                                     .font(.title2)
                                     .padding(.bottom)
                             }
-                            .foregroundStyle(textColor)
+                            .foregroundStyle(Color.primary)
                         }
                         .padding(.horizontal, 50)
                         .padding(.top, 20)
@@ -62,7 +61,7 @@ struct Settings: View {
                                     .font(.title2)
                                     .padding(.bottom)
                             }
-                            .foregroundStyle(textColor)
+                            .foregroundStyle(Color.primary)
                                 
                         }
                         .padding(.horizontal, 50)

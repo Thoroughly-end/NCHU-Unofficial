@@ -67,7 +67,6 @@ class ILearningScraper {
         }
     }
     
-    // ⭐️ 抓取最新公告，並回傳 (課程ID, 公告資料) 的陣列，方便我們分類
     func fetchLatestAnnouncements() async -> [AnnouncementData] {
         let latestBulletinURLString = "\(baseURL)/dashboard/latestBulletin"
         guard let url = URL(string: latestBulletinURLString) else { return [] }
@@ -87,32 +86,24 @@ class ILearningScraper {
             guard let html = String(data: data, encoding: .utf8) else { return [] }
             let document = try SwiftSoup.parse(html)
             
-            // 🎯 1. 鎖定表格內所有帶有 data-url 的公告連結
-            // CSS Selector 解析：找尋 id 為 bulletinMgrTable 裡面的 a 標籤，且 class 包含 fs-bulletin-item
             let announcementLinks = try document.select("#bulletinMgrTable a.fs-bulletin-item")
             
             var results: [AnnouncementData] = []
             
             for link in announcementLinks {
-                // 🎯 2. 從自訂屬性中抽出「標題」與「真實網址」
                 let title = try link.attr("data-modal-title").trimmingCharacters(in: .whitespacesAndNewlines)
                 let dataUrl = try link.attr("data-url")
                 
-                // 防呆：如果網址是空的就跳過
                 if dataUrl.isEmpty { continue }
-                
-                // 組裝成絕對網址
+            
                 let fullContentUrl = baseURL + dataUrl
-                
-                // 🎯 3. 從 dataUrl 裡面把課程 ID (course.44660) 挖出來
+            
                 var targetCourseId = 0
-                // 用 Regex 尋找 "course." 後面的數字
                 if let range = dataUrl.range(of: "(?<=course\\.)\\d+", options: .regularExpression),
                    let extractedID = Int(String(dataUrl[range])) {
                     targetCourseId = extractedID
                 }
                 
-                // 🎯 4. 組裝資料
                 if targetCourseId != 0 && !title.isEmpty {
                     let newAnnouncement = AnnouncementData(courseID: targetCourseId, title: title, url: fullContentUrl)
                     results.append(newAnnouncement)
@@ -127,6 +118,61 @@ class ILearningScraper {
             print("failed with error: \(error.localizedDescription)")
             return []
         }
+    }
+}
+
+class ILearningAnnouncementContentScraper {
+    static let shared = ILearningAnnouncementContentScraper()
+    
+    private init() {}
+    
+    func fetchAnnouncementContent(for course: CourseData) async {
+        for announcement in course.announcements {
+            guard announcement.content == nil else { continue }
+            guard let url = URL(string: announcement.url) else { continue }
+            
+            var request = URLRequest(url: url)
+            request.httpMethod = "GET"
+            request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+            
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                    print("Server rejected or session expired")
+                    return
+                }
+                guard let html = String(data: data, encoding: .utf8) else { continue }
+                let document = try SwiftSoup.parse(html)
+                
+                let contentText = try document.select("div.fs-text-break-word.bulletin-content").text()
+                var extractedAttachments: [Attachment] = []
+                let fileLinks = try document.select("div.fs-list.fs-filelist a")
+                
+                for link in fileLinks {
+                    let fileName = try link.text().trimmingCharacters(in: .whitespacesAndNewlines)
+                    let fileUrl = try link.attr("href")
+                    let fullFileUrl = "https://lms2020.nchu.edu.tw" + fileUrl
+                    
+                    if !fileName.isEmpty && !fileUrl.isEmpty {
+                        let newAttachment = Attachment(name: fileName, url: fullFileUrl)
+                        extractedAttachments.append(newAttachment)
+                    }
+                }
+                
+                await MainActor.run {
+                    announcement.setContentAndAttachments(content: contentText, attachments: extractedAttachments)
+                }
+                
+                print("Got announcement content：\(announcement.title)")
+                print("Got \(extractedAttachments.count) attachments")
+                
+                try? await Task.sleep(nanoseconds: 500000000)
+                
+            } catch {
+                print("Fetch \(announcement.title) content failed: \(error.localizedDescription)")
+            }
+        }
+        
     }
 }
 

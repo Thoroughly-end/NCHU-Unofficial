@@ -14,7 +14,6 @@ struct Account: View {
     
     var body: some View {
         @State var backgroundColor: Color = colorScheme  == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
-        @State var textColor: Color = colorScheme == .dark ? Color.white : Color.black
         
         ZStack {
             Color(backgroundColor).ignoresSafeArea()
@@ -28,7 +27,7 @@ struct Account: View {
                         Button(action: {dataManager.showLoginSheet = true}) {
                             Text("Sign In")
                                 .font(.title2)
-                                .foregroundStyle(Color(textColor))
+                                .foregroundStyle(Color.primary)
                                 .padding(10)
                         }
                         .glassEffect(.clear.tint(Color.green))
@@ -42,7 +41,7 @@ struct Account: View {
                         Button(action: dataManager.logout) {
                             Text("Sign Out")
                                 .font(.title2)
-                                .foregroundStyle(Color(textColor))
+                                .foregroundStyle(Color.primary)
                                 .padding(10)
                         }
                         .glassEffect(.clear.tint(Color.red))

@@ -41,7 +41,6 @@ struct DayCard: View {
     let day: Int
     
     var body: some View {
-        @State var backgroundColor: Color = colorScheme  == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
         HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: 8) {
                 Group {
@@ -84,7 +83,6 @@ struct TimeCard: View {
     let time: Int
     
     var body: some View {
-        @State var backgroundColor: Color = colorScheme  == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
         HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: 8) {
                 Group {

@@ -8,8 +8,6 @@
 import SwiftUI
 
 struct Schedule: View {
-    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
-    @AppStorage("scheduleList") private var scheduleList = ScheduleWrapper(items: [])
     @State private var isCheckingSession: Bool = false
     @EnvironmentObject var dataManager: DataManager
     @Environment(\.colorScheme) var colorScheme
@@ -27,20 +25,20 @@ struct Schedule: View {
             if isCheckingSession {
                 ProgressView("Checking Session")
             } else {
-                if isLoggedIn {
+                if dataManager.isLoggedIn {
                     let days = 0..<8
                     let times = 1..<14
                     
-                    if scheduleList.items.count < 91 {
+                    if dataManager.scheduleList.items.count < 91 {
                         Text("Not enough data")
                     } else {
                         VStack(alignment: .leading) {
                             HStack {
                                 Text("My Schedule")
-                                    .font(.system(size: 34, weight: .black, design: .rounded))
-                                    .foregroundColor(Color.primary)
-                                    .padding(.horizontal)
-                                    .padding(.top, 20)
+                                    .font(.largeTitle)
+                                    .bold()
+                                    .padding(.leading, 50)
+                                    .padding(.top, 10)
                                 Spacer()
                                 
                                 Button {
@@ -55,7 +53,7 @@ struct Schedule: View {
                                     .frame(width: 60, height: 60)
                                     .glassEffect()
                                     .padding(.horizontal)
-                                    .padding(.top, 20)
+                                    .padding(.top, 10)
                                 }
                             }
                             .padding(.bottom, -20)
@@ -71,14 +69,14 @@ struct Schedule: View {
                                     ForEach(times, id: \.self) { time in
                                         HStack (alignment: .top, spacing: 10) {
                                             TimeCard(time: time)
-                                                .glassEffect()
                                             ForEach(days, id: \.self) { day in
                                                 if day != 0 {
-                                                    Card(course: scheduleList.items[(time - 1) * 7 + day - 1])
+                                                    Card(course: dataManager.scheduleList.items[(time - 1) * 7 + day - 1])
                                                 }
                                             }
                                         }
                                     }
+                                    
                                     VStack {}.frame(height: 70)
                                 }
                             }
@@ -97,10 +95,10 @@ struct Schedule: View {
     }
     
     private func initialLoad() {
-        guard isLoggedIn else { return }
+        guard dataManager.isLoggedIn else { return }
         guard dataManager.hasCportalCookies else { return }
         
-        if !scheduleList.items.isEmpty {
+        if !dataManager.scheduleList.items.isEmpty {
             return
         }
         
@@ -111,16 +109,15 @@ struct Schedule: View {
                 
                 Task { @MainActor in
                     if let schedule = await ScheduleScraper.shared.fetchSchedule() {
-                        scheduleList.items = schedule
+                        dataManager.scheduleList.items = schedule
                     } else {
-                        scheduleList.items = []
+                        dataManager.scheduleList.items = []
                     }
                     isCheckingSession = false
                 }
             } else {
                 print("Session expired, please login again")
                 DispatchQueue.main.async {
-                    isLoggedIn = false
                     dataManager.logout()
                     isCheckingSession = false
                 }
@@ -129,16 +126,30 @@ struct Schedule: View {
     }
     
     private func manualRefresh() {
-        guard isLoggedIn && dataManager.hasCportalCookies else { return }
+        guard dataManager.isLoggedIn && dataManager.hasCportalCookies else { return }
         
-        Task {
-            if let newSchedule = await ScheduleScraper.shared.fetchSchedule() {
-                scheduleList.items = newSchedule
-                print("Manual refresh schedule successfully")
+        isCheckingSession = true
+        SessionManager.shared.verifyCookieStatus { isValid in
+            if isValid {
+                isCheckingSession = false
+                Task {
+                    if let newSchedule = await ScheduleScraper.shared.fetchSchedule() {
+                        dataManager.scheduleList.items = newSchedule
+                        print("Manual refresh schedule successfully")
+                    } else {
+                        dataManager.scheduleList.items = []
+                        print("Failure in manual refresh")
+                    }
+                }
             } else {
-                scheduleList.items = []
-                print("Failure in manual refresh")
+                print("Session expired, please login again")
+                DispatchQueue.main.async {
+                    dataManager.logout()
+                    isCheckingSession = false
+                }
             }
         }
+        
+        
     }
 }

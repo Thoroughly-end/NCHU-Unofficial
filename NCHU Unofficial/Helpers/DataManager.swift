@@ -22,13 +22,25 @@ class DataManager: ObservableObject {
         }
     }
     
+    @AppStorage("hasCportalCookies") var hasCportalCookies: Bool = false {
+        willSet {
+            objectWillChange.send()
+        }
+    }
+    
+    @AppStorage("hasiLearningCookies") var hasiLearningCookies: Bool = false {
+        willSet {
+            objectWillChange.send()
+        }
+    }
+    
     @Published var showLoginSheet: Bool = false
-    @Published var hasCportalCookies: Bool = false
-    @Published var hasiLearningCookies: Bool = false
     @Published var courses: [CourseData] = []
     
     func logout() {
         isLoggedIn = false
+        hasCportalCookies = false
+        hasiLearningCookies = false
         CookieManager.shared.clearCookies()
     }
     
@@ -105,11 +117,13 @@ extension String {
     }
 }
 
-class AnnouncementData {
+class AnnouncementData: Identifiable, ObservableObject {
     var courseID: Int
     var title: String
     var url: String
-    var content: String?
+    
+    @Published var content: String?
+    @Published var attachments: [Attachment] = []
     
     init(courseID: Int, title: String, url: String) {
         self.courseID = courseID
@@ -118,15 +132,24 @@ class AnnouncementData {
         self.content = nil
     }
     
-    func setContent(_ content: String) {
-        self.content = content
+    func setContentAndAttachments(content: String, attachments: [Attachment]) {
+        DispatchQueue.main.async {
+            self.content = content
+            self.attachments = attachments
+        }
     }
 }
 
-class CourseData {
+struct Attachment: Identifiable {
+    let id = UUID()
+    let name: String
+    let url: String
+}
+
+class CourseData: Identifiable, ObservableObject {
     var id: Int
     var name: String
-    var announcements: [AnnouncementData]
+    @Published var announcements: [AnnouncementData]
     
     init(id: Int, name: String) {
         self.id = id

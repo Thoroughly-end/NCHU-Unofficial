@@ -42,7 +42,7 @@ struct ContentView: View {
             case .schedule:
                 Schedule()
             case .reminders:
-                Reminders()
+                Announcements()
             case .courses:
                 Courses()
             case .settings:

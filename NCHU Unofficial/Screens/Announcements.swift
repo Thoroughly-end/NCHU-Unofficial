@@ -8,9 +8,8 @@
 
 import SwiftUI
 
-struct Reminders: View {
+struct Announcements: View {
     @EnvironmentObject var dataManager: DataManager
-    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
     @State private var isCheckingSession: Bool = false
     @Environment(\.colorScheme) var colorScheme
     
@@ -20,7 +19,35 @@ struct Reminders: View {
     
     var body: some View {
         VStack {
-            Text("Reminders")
+            if isCheckingSession {
+                ProgressView("Checking Session")
+            } else {
+                if dataManager.isLoggedIn {
+                    VStack {
+                        HStack {
+                            Text("Announcements")
+                                .font(.largeTitle)
+                                .bold()
+                                .padding(.leading, 50)
+                                .padding(.top, 20)
+                            Spacer()
+                        }
+                        ScrollView(.vertical) {
+                            VStack {
+                                ForEach(dataManager.courses) { course in
+                                    if !course.announcements.isEmpty {
+                                        AnnouncementsCard(course: course)
+                                    }
+                                    
+                                }
+                                VStack {}.frame(height: 70)
+                            }
+                        }
+                    }
+                } else {
+                    Text("Please login")
+                }
+            }
         }
         .onAppear() {
             initialLoadIfNeeded()
@@ -28,7 +55,7 @@ struct Reminders: View {
     }
     
     private func initialLoadIfNeeded() {
-        guard isLoggedIn else { return }
+        guard dataManager.isLoggedIn else { return }
         guard dataManager.hasiLearningCookies else { return }
         
         isCheckingSession = true
@@ -57,11 +84,16 @@ struct Reminders: View {
                 }
             } else {
                 DispatchQueue.main.async {
-                    isLoggedIn = false
                     dataManager.logout()
                     isCheckingSession = false
                 }
             }
         }
     }
+}
+
+
+#Preview {
+    Announcements()
+        .environmentObject(DataManager())
 }
