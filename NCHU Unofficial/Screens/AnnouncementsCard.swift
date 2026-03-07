@@ -83,6 +83,10 @@ struct AnnouncementsCard: View {
                 }
                 .padding(.top, 10)
                 .padding(.trailing, 20)
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .move(edge: .top)),
+                    removal: .opacity.combined(with: .move(edge: .top))))
+
                 
             }
         }
@@ -93,7 +97,7 @@ struct AnnouncementsCard: View {
         isLoading = true
         
         Task {
-            await ILearningAnnouncementContentScraper.shared.fetchAnnouncementContent(for: course)
+            await ILearningAnnouncementsContentScraper.shared.fetchAnnouncementContent(for: course)
             await MainActor.run {
                 self.isLoading = false
             }
@@ -103,6 +107,7 @@ struct AnnouncementsCard: View {
 
 struct AnnouncementRowView: View {
     @ObservedObject var announcement: AnnouncementData
+    @State private var downloadingAttachmentID: UUID? = nil
     
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
@@ -126,13 +131,28 @@ struct AnnouncementRowView: View {
                                 .foregroundColor(Color.primary)
                             
                             ForEach(announcement.attachments) { attachment in
-                                HStack {
-                                    Image(systemName: "doc.text")
-                                        .foregroundColor(.gray)
-                                    Text(attachment.name)
-                                        .font(.caption)
-                                        .foregroundColor(.blue)
-                                        .underline()
+                                Button {
+                                    downloadAndShare(attachment: attachment)
+                                } label: {
+                                    HStack {
+                                        if downloadingAttachmentID == attachment.id {
+                                            ProgressView()
+                                                .scaleEffect(0.8)
+                                                .frame(width: 20, height: 20)
+                                        } else {
+                                            Image(systemName: "doc.text")
+                                                .foregroundColor(.gray)
+                                        }
+                                        
+                                        Text(attachment.name)
+                                            .font(.caption)
+                                            .foregroundColor(.blue)
+                                            .underline()
+                                            .lineLimit(1)
+                                    }
+                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, 8)
+                                    .glassEffect(.regular.interactive())
                                 }
                             }
                         }
@@ -145,8 +165,205 @@ struct AnnouncementRowView: View {
         }
         .padding(60)
     }
+    
+    func downloadAndShare(attachment: Attachment) {
+        guard downloadingAttachmentID == nil else { return }
+        downloadingAttachmentID = attachment.id
+        
+        Task {
+            if let localFileURL = await ILearningDownloadAttachment.shared.download(for: attachment) {
+                
+                await MainActor.run {
+                    presentShareSheet(url: localFileURL)
+                    downloadingAttachmentID = nil
+                }
+                
+            } else {
+                await MainActor.run {
+                    downloadingAttachmentID = nil
+                    print("Fail to download attachment")
+                }
+            }
+        }
+    }
+
+    func presentShareSheet(url: URL) {
+        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            
+            if let popover = activityVC.popoverPresentationController {
+                popover.sourceView = rootVC.view
+                popover.sourceRect = CGRect(x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            
+            rootVC.present(activityVC, animated: true)
+        }
+    }
 }
 
+struct RecentAnnouncementCard: View {
+    @ObservedObject var announcement: AnnouncementData
+    @EnvironmentObject var dataManager: DataManager
+    @State var isExpanded: Bool = false
+    @State private var isLoading: Bool = false
+    @State private var downloadingAttachmentID: UUID? = nil
+    
+    var body: some View {
+        VStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 6) {
+                Group {
+                    if let courseName = dataManager.courses.first(where: { $0.id == announcement.courseID })?.name {
+                        Text(courseName)
+                            .font(.title3)
+                            .foregroundColor(.blue)
+                            .bold()
+                    }
+                    
+                    Text(announcement.title)
+                        .font(.headline)
+                    
+                    if let date = announcement.date {
+                        Text(date, format: .dateTime.month().day())
+                            .font(.caption2)
+                            .foregroundColor(.gray)
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glassEffect()
+            .padding(.horizontal, 20)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    isExpanded.toggle()
+                }
+                print("Toggle")
+                if isExpanded && announcement.content == nil {
+                    print("Fetch data")
+                    isLoading = true
+                    fetchData()
+                }
+            }
+            
+            if isExpanded {
+                HStack {
+                    Spacer()
+                    if let content = announcement.content {
+                        ScrollView(.vertical, showsIndicators: true) {
+                            VStack {
+                                Text(content)
+                                    .font(.body)
+                                if !announcement.attachments.isEmpty {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Attachments：")
+                                            .font(.footnote)
+                                            .foregroundColor(Color.primary)
+                                        
+                                        ForEach(announcement.attachments) { attachment in
+                                            HStack {
+                                                Button {
+                                                    downloadAndShare(attachment: attachment)
+                                                } label: {
+                                                    HStack {
+                                                        if downloadingAttachmentID == attachment.id {
+                                                            ProgressView()
+                                                                .scaleEffect(0.8)
+                                                                .frame(width: 20, height: 20)
+                                                        } else {
+                                                            Image(systemName: "doc.text")
+                                                                .foregroundColor(.gray)
+                                                        }
+                                                        
+                                                        Text(attachment.name)
+                                                            .font(.caption)
+                                                            .foregroundColor(.blue)
+                                                            .underline()
+                                                            .lineLimit(1)
+                                                    }
+                                                    .padding(.vertical, 4)
+                                                    .padding(.horizontal, 8)
+                                                    .glassEffect(.regular.interactive())
+                                                }
+                                                Spacer()
+                                            }
+                                            
+                                        }
+                                    }
+                                    .padding(.top, 6)
+                                }
+                            }
+                            
+                        }
+                        .padding(60)
+                        .frame(maxHeight: 300)
+                        .glassEffect()
+                    } else {
+                        EmptyView()
+                    }
+                }
+                .padding(.horizontal, 20)
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .move(edge: .top)),
+                    removal: .opacity.combined(with: .move(edge: .top))))
+            }
+        }
+        
+    }
+    
+    private func fetchData() {
+        guard isLoading else { return }
+        isLoading = true
+        
+        Task {
+            await ILearningAnnouncementContentScraper.shared.fetchAnnouncementContent(for: announcement)
+            await MainActor.run {
+                self.isLoading = false
+            }
+        }
+    }
+    
+    func downloadAndShare(attachment: Attachment) {
+        guard downloadingAttachmentID == nil else { return }
+        downloadingAttachmentID = attachment.id
+        
+        Task {
+            if let localFileURL = await ILearningDownloadAttachment.shared.download(for: attachment) {
+                
+                await MainActor.run {
+                    presentShareSheet(url: localFileURL)
+                    downloadingAttachmentID = nil
+                }
+                
+            } else {
+                await MainActor.run {
+                    downloadingAttachmentID = nil
+                    print("Fail to download attachment")
+                }
+            }
+        }
+    }
+
+    func presentShareSheet(url: URL) {
+        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            
+            if let popover = activityVC.popoverPresentationController {
+                popover.sourceView = rootVC.view
+                popover.sourceRect = CGRect(x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            
+            rootVC.present(activityVC, animated: true)
+        }
+    }
+}
 
 
 #Preview {

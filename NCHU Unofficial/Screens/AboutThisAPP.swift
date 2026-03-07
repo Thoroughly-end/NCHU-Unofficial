@@ -10,10 +10,12 @@ import Foundation
 
 struct AboutThisAPP: View {
     @Environment(\.colorScheme) var colorScheme
+    @State private var showCopiedToast: Bool = false
     
     var body: some View {
         @State var backgroundColor: Color = colorScheme  == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
         @State var textColor: Color = colorScheme == .dark ? Color.white : Color.black
+        
         
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown Version"
         
@@ -55,9 +57,24 @@ struct AboutThisAPP: View {
                             .padding(.leading, 30)
                         Text("Email").font(.title3)
                         Spacer()
-                        Text("allenkuo0818@gmail.com")
+                        Text(verbatim: "allenkuo0818@gmail.com")
+                            .foregroundColor(.blue)
                             .padding(.trailing, 30)
-                            .foregroundStyle(Color.blue)
+                            .onTapGesture {
+                                let impactMed = UIImpactFeedbackGenerator(style: .medium)
+                                impactMed.impactOccurred()
+                                
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                                    showCopiedToast = true
+                                }
+                                
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        showCopiedToast = false
+                                    }
+                                }
+                            }
+                            
                     }
                     .frame(height: 100, alignment: .center)
                     .padding(.top, -20)
@@ -81,6 +98,28 @@ struct AboutThisAPP: View {
             }
             .padding(20)
         }
+        .overlay(
+            VStack {
+                Spacer()
+                
+                if showCopiedToast {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Text("Copied to clipboard")
+                            .font(.subheadline)
+                            .bold()
+                            .foregroundColor(.primary)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .glassEffect()
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .padding(.bottom, 40)
+                }
+            }
+            .allowsHitTesting(false)
+        )
     }
 }
 #Preview {

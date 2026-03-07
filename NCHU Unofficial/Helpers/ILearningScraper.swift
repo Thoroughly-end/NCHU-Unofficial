@@ -85,12 +85,19 @@ class ILearningScraper {
             
             guard let html = String(data: data, encoding: .utf8) else { return [] }
             let document = try SwiftSoup.parse(html)
-            
-            let announcementLinks = try document.select("#bulletinMgrTable a.fs-bulletin-item")
+            let rows = try document.select("#bulletinMgrTable tr")
             
             var results: [AnnouncementData] = []
             
-            for link in announcementLinks {
+            for row in rows {
+                let dateString = try row.select("td.hidden-xs.text-center.col-date div.text-overflow").text()
+                let link = try row.select("a.fs-bulletin-item")
+                
+                let formatter = DateFormatter()
+                formatter.dateFormat = "yyyy-MM-dd"
+                let date = formatter.date(from: dateString)
+                
+                print(dateString)
                 let title = try link.attr("data-modal-title").trimmingCharacters(in: .whitespacesAndNewlines)
                 let dataUrl = try link.attr("data-url")
                 
@@ -105,10 +112,16 @@ class ILearningScraper {
                 }
                 
                 if targetCourseId != 0 && !title.isEmpty {
-                    let newAnnouncement = AnnouncementData(courseID: targetCourseId, title: title, url: fullContentUrl)
+                    let newAnnouncement = AnnouncementData(courseID: targetCourseId, title: title, url: fullContentUrl, date: date)
                     results.append(newAnnouncement)
                     print("Got announcement：[\(targetCourseId)] \(title)")
                 }
+            }
+            
+            results.sort { (announcement1, announcement2) -> Bool in
+                let date1 = announcement1.date ?? Date.distantPast
+                let date2 = announcement2.date ?? Date.distantPast
+                return date1 > date2
             }
             
             print("Got \(results.count) announcements.")
@@ -121,58 +134,109 @@ class ILearningScraper {
     }
 }
 
-class ILearningAnnouncementContentScraper {
-    static let shared = ILearningAnnouncementContentScraper()
+class ILearningAnnouncementsContentScraper {
+    static let shared = ILearningAnnouncementsContentScraper()
     
     private init() {}
     
     func fetchAnnouncementContent(for course: CourseData) async {
         for announcement in course.announcements {
-            guard announcement.content == nil else { continue }
-            guard let url = URL(string: announcement.url) else { continue }
-            
-            var request = URLRequest(url: url)
-            request.httpMethod = "GET"
-            request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
-            
-            do {
-                let (data, response) = try await URLSession.shared.data(for: request)
-                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                    print("Server rejected or session expired")
-                    return
-                }
-                guard let html = String(data: data, encoding: .utf8) else { continue }
-                let document = try SwiftSoup.parse(html)
-                
-                let contentText = try document.select("div.fs-text-break-word.bulletin-content").text()
-                var extractedAttachments: [Attachment] = []
-                let fileLinks = try document.select("div.fs-list.fs-filelist a")
-                
-                for link in fileLinks {
-                    let fileName = try link.text().trimmingCharacters(in: .whitespacesAndNewlines)
-                    let fileUrl = try link.attr("href")
-                    let fullFileUrl = "https://lms2020.nchu.edu.tw" + fileUrl
-                    
-                    if !fileName.isEmpty && !fileUrl.isEmpty {
-                        let newAttachment = Attachment(name: fileName, url: fullFileUrl)
-                        extractedAttachments.append(newAttachment)
-                    }
-                }
-                
-                await MainActor.run {
-                    announcement.setContentAndAttachments(content: contentText, attachments: extractedAttachments)
-                }
-                
-                print("Got announcement content：\(announcement.title)")
-                print("Got \(extractedAttachments.count) attachments")
-                
-                try? await Task.sleep(nanoseconds: 500000000)
-                
-            } catch {
-                print("Fetch \(announcement.title) content failed: \(error.localizedDescription)")
-            }
+            await ILearningAnnouncementContentScraper.shared.fetchAnnouncementContent(for: announcement)
         }
+    }
+}
+class ILearningAnnouncementContentScraper {
+    static let shared = ILearningAnnouncementContentScraper()
+    
+    private init() {}
+    
+    func fetchAnnouncementContent(for announcement: AnnouncementData) async {
+        guard announcement.content == nil else { return }
+        guard let url = URL(string: announcement.url) else { return }
         
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                print("Server rejected or session expired")
+                return
+            }
+            guard let html = String(data: data, encoding: .utf8) else { return }
+            let document = try SwiftSoup.parse(html)
+            
+            let contentText = try document.select("div.fs-text-break-word.bulletin-content").text()
+            var extractedAttachments: [Attachment] = []
+            let fileLinks = try document.select("div.fs-list.fs-filelist a")
+            
+            for link in fileLinks {
+                let fileName = try link.text().trimmingCharacters(in: .whitespacesAndNewlines)
+                let fileUrl = try link.attr("href")
+                let fullFileUrl = "https://lms2020.nchu.edu.tw" + fileUrl
+                
+                if !fileName.isEmpty && !fileUrl.isEmpty {
+                    let newAttachment = Attachment(name: fileName, url: fullFileUrl)
+                    extractedAttachments.append(newAttachment)
+                }
+            }
+            
+            await MainActor.run {
+                announcement.setContentAndAttachments(content: contentText, attachments: extractedAttachments)
+            }
+            
+            print("Got announcement content：\(announcement.title)")
+            print("Got \(extractedAttachments.count) attachments")
+            
+            try? await Task.sleep(nanoseconds: 500000000)
+            
+        } catch {
+            print("Fetch \(announcement.title) content failed: \(error.localizedDescription)")
+        }
+    }
+}
+
+class ILearningDownloadAttachment {
+    static var shared = ILearningDownloadAttachment()
+    
+    private init() {}
+    
+    func download(for attachment: Attachment) async -> URL? {
+        guard let url = URL(string: attachment.url) else { return nil }
+                
+        var request = URLRequest(url: url)
+        
+        request.httpMethod = "GET"
+        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+        
+        do {
+            let (tempURL, response) = try await URLSession.shared.download(for: request)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                print("Fail in downloading")
+                return nil
+            }
+            
+            let fileManager = FileManager.default
+            
+            guard let cacheDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+                return nil
+            }
+            
+            let safeFileName = attachment.name.removingPercentEncoding ?? attachment.name
+            let destinationURL = cacheDirectory.appendingPathComponent(safeFileName)
+            
+            if fileManager.fileExists(atPath: destinationURL.path) {
+                try fileManager.removeItem(at: destinationURL)
+            }
+            
+            try fileManager.moveItem(at: tempURL, to: destinationURL)
+            print("Downloaded attachment to：\(destinationURL.path)")
+            return destinationURL
+        } catch {
+            print("Error: \(error)")
+            return nil
+        }
     }
 }
 

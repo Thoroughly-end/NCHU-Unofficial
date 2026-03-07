@@ -121,14 +121,16 @@ class AnnouncementData: Identifiable, ObservableObject {
     var courseID: Int
     var title: String
     var url: String
+    var date: Date?
     
     @Published var content: String?
     @Published var attachments: [Attachment] = []
     
-    init(courseID: Int, title: String, url: String) {
+    init(courseID: Int, title: String, url: String, date: Date?) {
         self.courseID = courseID
         self.title = title
         self.url = url
+        self.date = date
         self.content = nil
     }
     
@@ -140,10 +142,15 @@ class AnnouncementData: Identifiable, ObservableObject {
     }
 }
 
-struct Attachment: Identifiable {
+class Attachment: Identifiable {
     let id = UUID()
     let name: String
     let url: String
+    
+    init(name: String, url: String) {
+        self.name = name.removingBracket()
+        self.url = url
+    }
 }
 
 class CourseData: Identifiable, ObservableObject {
@@ -159,5 +166,27 @@ class CourseData: Identifiable, ObservableObject {
     
     func addAnnouncement(_ announcement: AnnouncementData) {
         self.announcements.append(announcement)
+    }
+    
+    static func getRecentAnnouncements(from courses: [CourseData]) -> [AnnouncementData] {
+        guard let tenDaysAgo = Calendar.current.date(byAdding: .day, value: -10, to: Date()) else {
+            return []
+        }
+        let allAnnouncements = courses.flatMap { $0.announcements }
+
+        let recentAnnouncements = allAnnouncements.filter { announcement in
+            if let date = announcement.date {
+                return date >= tenDaysAgo
+            }
+            return false
+        }
+        
+        let sortedAnnouncements = recentAnnouncements.sorted { a1, a2 in
+            let date1 = a1.date ?? Date.distantPast
+            let date2 = a2.date ?? Date.distantPast
+            return date1 > date2
+        }
+        
+        return sortedAnnouncements
     }
 }

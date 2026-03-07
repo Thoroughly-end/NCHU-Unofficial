@@ -8,13 +8,23 @@
 
 import SwiftUI
 
+enum AnnouncementTab {
+    case all
+    case recent
+}
+
 struct Announcements: View {
     @EnvironmentObject var dataManager: DataManager
     @State private var isCheckingSession: Bool = false
     @Environment(\.colorScheme) var colorScheme
+    @State private var selectedTab: AnnouncementTab = .recent
     
     var backgroundColor: Color {
         colorScheme == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
+    }
+    
+    var recentAnnouncements: [AnnouncementData] {
+        return CourseData.getRecentAnnouncements(from: dataManager.courses)
     }
     
     var body: some View {
@@ -31,17 +41,31 @@ struct Announcements: View {
                                 .padding(.leading, 50)
                                 .padding(.top, 20)
                             Spacer()
+                            
+                            
                         }
-                        ScrollView(.vertical) {
-                            VStack {
-                                ForEach(dataManager.courses) { course in
-                                    if !course.announcements.isEmpty {
-                                        AnnouncementsCard(course: course)
-                                    }
-                                    
-                                }
-                                VStack {}.frame(height: 70)
+                        HStack {
+                            Spacer()
+                            Picker("DisplayMode", selection: $selectedTab) {
+                                Text("All").tag(AnnouncementTab.all)
+
+                                Text("Recent").tag(AnnouncementTab.recent)
                             }
+                            .pickerStyle(.segmented)
+                            .frame(width: 160)
+                            .padding(.trailing, 30)
+                            //.glassEffect()
+                        }
+                        
+                        
+                        ScrollView(.vertical) {
+                            VStack {}.frame(height: 20)
+                            if selectedTab == .all {
+                                renderAllCoursesView()
+                            } else {
+                                renderRecentAnnouncementsView()
+                            }
+                            
                         }
                     }
                 } else {
@@ -89,6 +113,39 @@ struct Announcements: View {
                 }
             }
         }
+    }
+    
+    @ViewBuilder
+    private func renderAllCoursesView() -> some View {
+        VStack {
+            ForEach(dataManager.courses) { course in
+                if !course.announcements.isEmpty {
+                    AnnouncementsCard(course: course)
+                }
+                
+            }
+            /*ForEach(recentAnnouncements) { announcement in
+                Text(announcement.title)
+            }*/
+            
+            VStack {}.frame(height: 70)
+        }
+    }
+    
+    @ViewBuilder
+    private func renderRecentAnnouncementsView() -> some View {
+        VStack(spacing: 15) {
+            if recentAnnouncements.isEmpty {
+                Text("There is no announcements in ten days.")
+                    .foregroundColor(.secondary)
+                    .padding(.top, 50)
+            } else {
+                ForEach(recentAnnouncements) { announcement in
+                    RecentAnnouncementCard(announcement: announcement)
+                }
+            }
+        }
+        VStack {}.frame(height: 70)
     }
 }
 
