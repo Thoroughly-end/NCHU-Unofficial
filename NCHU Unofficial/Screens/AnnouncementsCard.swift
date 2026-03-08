@@ -235,7 +235,7 @@ struct RecentAnnouncementCard: View {
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
             .glassEffect()
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 30)
             .contentShape(Rectangle())
             .onTapGesture {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -305,7 +305,7 @@ struct RecentAnnouncementCard: View {
                         EmptyView()
                     }
                 }
-                .padding(.horizontal, 50)
+                .padding(.horizontal, 30)
                 .transition(.asymmetric(
                     insertion: .opacity.combined(with: .move(edge: .top)),
                     removal: .opacity.combined(with: .move(edge: .top))))
