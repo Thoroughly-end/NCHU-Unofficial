@@ -24,7 +24,7 @@ struct AnnouncementsCard: View {
                         .font(.title)
                         .lineLimit(2)
                         .padding(.leading, 10)
-                        .frame(width: 170)
+                        .frame(width: 170, alignment: .leading)
                     
                     Spacer()
                                     
@@ -58,14 +58,14 @@ struct AnnouncementsCard: View {
                         if isLoading {
                             HStack {
                                 Spacer()
-                                ProgressView("努力爬取公告中...")
+                                ProgressView("Scrapping announcements...")
                                     .padding(.vertical, 20)
                                     .frame(maxWidth: .infinity)
                                     .glassEffect()
                                 Spacer()
                             }
                         } else if course.announcements.isEmpty {
-                            Text("目前尚無最新公告")
+                            Text("No announcement yet")
                                 .foregroundColor(.secondary)
                                 .padding(.vertical, 20)
                                 .padding(.leading, 10)
@@ -94,10 +94,9 @@ struct AnnouncementsCard: View {
     
     private func fetchData() {
         guard isLoading else { return }
-        isLoading = true
         
         Task {
-            await ILearningAnnouncementsContentScraper.shared.fetchAnnouncementContent(for: course)
+            await ILearningScraper.shared.fetchAnnouncementContent(for: course)
             await MainActor.run {
                 self.isLoading = false
             }
@@ -171,7 +170,7 @@ struct AnnouncementRowView: View {
         downloadingAttachmentID = attachment.id
         
         Task {
-            if let localFileURL = await ILearningDownloadAttachment.shared.download(for: attachment) {
+            if let localFileURL = await ILearningScraper.shared.download(for: attachment) {
                 
                 await MainActor.run {
                     presentShareSheet(url: localFileURL)
@@ -306,7 +305,7 @@ struct RecentAnnouncementCard: View {
                         EmptyView()
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 50)
                 .transition(.asymmetric(
                     insertion: .opacity.combined(with: .move(edge: .top)),
                     removal: .opacity.combined(with: .move(edge: .top))))
@@ -320,7 +319,7 @@ struct RecentAnnouncementCard: View {
         isLoading = true
         
         Task {
-            await ILearningAnnouncementContentScraper.shared.fetchAnnouncementContent(for: announcement)
+            await ILearningScraper.shared.fetchAnnouncementContent(for: announcement)
             await MainActor.run {
                 self.isLoading = false
             }
@@ -332,7 +331,7 @@ struct RecentAnnouncementCard: View {
         downloadingAttachmentID = attachment.id
         
         Task {
-            if let localFileURL = await ILearningDownloadAttachment.shared.download(for: attachment) {
+            if let localFileURL = await ILearningScraper.shared.download(for: attachment) {
                 
                 await MainActor.run {
                     presentShareSheet(url: localFileURL)

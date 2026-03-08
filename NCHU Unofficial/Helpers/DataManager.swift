@@ -153,19 +153,66 @@ class Attachment: Identifiable {
     }
 }
 
+class Homework: Identifiable, ObservableObject {
+    let id: Int
+    let url: String
+    let name: String
+    let courseID: Int
+    @Published var startDate: Date?
+    @Published var dueDate: Date?
+    let isCompleted: Bool
+    let score: Int?
+    @Published var explanation: String?
+    @Published var proportion: String?
+    
+    
+    init(id: Int, url: String, name: String, isCompleted: Bool, score: Int?, courseID: Int) {
+        self.id = id
+        self.url = url
+        self.name = name
+        self.startDate = nil
+        self.dueDate = nil
+        self.isCompleted = isCompleted
+        self.score = score
+        self.explanation = nil
+        self.proportion = nil
+        self.courseID = courseID
+    }
+    
+    func setExplanationAndPropotion(explanation: String?, proportion: String?) {
+        DispatchQueue.main.async {
+            self.explanation = explanation
+            self.proportion = proportion
+        }
+    }
+    
+    func setStartAndDueDate(startDate: Date, dueDate: Date) {
+        DispatchQueue.main.async {
+            self.startDate = startDate
+            self.dueDate = dueDate
+        }
+    }
+}
+
 class CourseData: Identifiable, ObservableObject {
     var id: Int
     var name: String
     @Published var announcements: [AnnouncementData]
+    @Published var homeworks: [Homework]
     
     init(id: Int, name: String) {
         self.id = id
         self.name = name
         self.announcements = []
+        self.homeworks = []
     }
     
     func addAnnouncement(_ announcement: AnnouncementData) {
         self.announcements.append(announcement)
+    }
+    
+    func addHomework(_ homework: Homework) {
+        self.homeworks.append(homework)
     }
     
     static func getRecentAnnouncements(from courses: [CourseData]) -> [AnnouncementData] {
@@ -188,5 +235,27 @@ class CourseData: Identifiable, ObservableObject {
         }
         
         return sortedAnnouncements
+    }
+    
+    static func getRecentHomework(from courses: [CourseData]) -> [Homework] {
+        guard let tenDaysAgo = Calendar.current.date(byAdding: .day, value: -10, to: Date()) else {
+            return []
+        }
+        let allHomeworks = courses.flatMap { $0.homeworks }
+
+        let recentHomeworks = allHomeworks.filter { homework in
+            if let date = homework.dueDate {
+                return date >= tenDaysAgo
+            }
+            return false
+        }
+        
+        let sortedHomeworks = recentHomeworks.sorted { h1, h2 in
+            let date1 = h1.dueDate ?? Date.distantPast
+            let date2 = h2.dueDate ?? Date.distantPast
+            return date1 > date2
+        }
+        
+        return sortedHomeworks
     }
 }

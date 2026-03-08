@@ -1,30 +1,25 @@
 //
-//  Settings 2.swift
+//  Courses.swift
 //  NCHU Unofficial
 //
 //  Created by 郭家駿 on 2026/2/28.
 //
 
-
 import SwiftUI
 
-enum AnnouncementTab {
+enum HomeworkTab {
     case all
     case recent
 }
 
-struct Announcements: View {
+struct Courses: View {
     @EnvironmentObject var dataManager: DataManager
     @State private var isCheckingSession: Bool = false
     @Environment(\.colorScheme) var colorScheme
     @State private var selectedTab: AnnouncementTab = .recent
     
-    var backgroundColor: Color {
-        colorScheme == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
-    }
-    
-    var recentAnnouncements: [AnnouncementData] {
-        return CourseData.getRecentAnnouncements(from: dataManager.courses)
+    var recentHomeworks: [Homework] {
+        return CourseData.getRecentHomework(from: dataManager.courses)
     }
     
     var body: some View {
@@ -35,14 +30,12 @@ struct Announcements: View {
                 if dataManager.isLoggedIn {
                     VStack {
                         HStack {
-                            Text("Announcements")
+                            Text("Homeworks")
                                 .font(.largeTitle)
                                 .bold()
                                 .padding(.leading, 50)
                                 .padding(.top, 20)
                             Spacer()
-                            
-                            
                         }
                         HStack {
                             Spacer()
@@ -54,19 +47,21 @@ struct Announcements: View {
                             .pickerStyle(.segmented)
                             .frame(width: 160)
                             .padding(.trailing, 30)
-                            //.glassEffect()
                         }
                         
-                        
-                        ScrollView(.vertical) {
-                            VStack {}.frame(height: 20)
-                            if selectedTab == .all {
+                        if selectedTab == .all {
+                            ScrollView(.vertical) {
+                                VStack {}.frame(height: 20)
                                 renderAllCoursesView()
-                            } else {
-                                renderRecentAnnouncementsView()
+                                
                             }
-                            
+                        } else {
+                            ScrollView(.vertical) {
+                                VStack {}.frame(height: 20)
+                                renderRecentHomeWorksView()
+                            }
                         }
+                        
                     }
                 } else {
                     Text("Please login")
@@ -88,18 +83,14 @@ struct Announcements: View {
                 print("Session is valid, start to fetch courses")
                 Task { @MainActor in
                     let courses = await ILearningScraper.shared.fetchCourses()
-                    let announcements = await ILearningScraper.shared.fetchLatestAnnouncements()
                     for course in courses {
-                        let matchedAnnouncements = announcements.filter { $0.courseID == course.id }
+                        await ILearningScraper.shared.fetchHomeworkList(course: course)
                         
-                        for announcement in matchedAnnouncements {
-                            course.addAnnouncement(announcement)
-                        }
-                    }
-                    for course in courses {
-                        let announcementCount = course.announcements.count
-                        if announcementCount > 0 {
-                            print("Course: [\(course.name)] has \(announcementCount) announcements")
+                        if !course.homeworks.isEmpty {
+                            for homework in course.homeworks {
+                                await ILearningScraper.shared.fetchHomeworkDetail(homework: homework)
+                                printInfo(homework: homework)
+                            }
                         }
                     }
                     dataManager.courses = courses
@@ -114,33 +105,48 @@ struct Announcements: View {
         }
     }
     
+    private func printInfo(homework: Homework) {
+        print(homework.name)
+        print(homework.id)
+        if let dueDate = homework.dueDate {
+            print(dueDate)
+        } else {
+            print("Error")
+        }
+        if let startDate = homework.startDate {
+            print(startDate)
+        } else {
+            print("Error")
+        }
+        if let explain = homework.explanation {
+            print(explain)
+        } else {
+            print("No Explaination")
+        }
+        print(homework.isCompleted)
+    }
+    
     @ViewBuilder
     private func renderAllCoursesView() -> some View {
         VStack {
             ForEach(dataManager.courses) { course in
-                if !course.announcements.isEmpty {
-                    AnnouncementsCard(course: course)
-                }
-                
+                CourseCard(course: course)
             }
-            /*ForEach(recentAnnouncements) { announcement in
-                Text(announcement.title)
-            }*/
             
             VStack {}.frame(height: 70)
         }
     }
     
     @ViewBuilder
-    private func renderRecentAnnouncementsView() -> some View {
+    private func renderRecentHomeWorksView() -> some View {
         VStack(spacing: 15) {
-            if recentAnnouncements.isEmpty {
+            if recentHomeworks.isEmpty {
                 Text("There is no announcements in ten days.")
                     .foregroundColor(.secondary)
                     .padding(.top, 50)
             } else {
-                ForEach(recentAnnouncements) { announcement in
-                    RecentAnnouncementCard(announcement: announcement)
+                ForEach(recentHomeworks) { homework in
+                    RecentHomeworkCard(homework: homework)
                 }
             }
         }
@@ -148,8 +154,7 @@ struct Announcements: View {
     }
 }
 
-
 #Preview {
-    Announcements()
+    Courses()
         .environmentObject(DataManager())
 }
