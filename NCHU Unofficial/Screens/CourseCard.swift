@@ -32,7 +32,7 @@ struct CourseCard: View {
             }
             .glassEffect(.regular.interactive())
             .frame(maxWidth: .infinity, minHeight: 120)
-            .padding(.horizontal, 50)
+            .padding(.horizontal, 30)
             .padding(.vertical, 10)
             .contentShape(Rectangle())
             .onTapGesture {

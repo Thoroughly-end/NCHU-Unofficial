@@ -176,10 +176,6 @@ struct RecentHomeworkCard: View {
                     }
                     
                     Spacer()
-                    Image(systemName: "chevron.down")
-                        .foregroundColor(.gray)
-                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                        .padding(.top, 30)
                 }
                 .padding(30)
             }
