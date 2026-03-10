@@ -9,54 +9,39 @@ import SwiftUI
 import WebKit
 
 struct Account: View {
-    @Environment(\.colorScheme) var colorScheme
-    @EnvironmentObject var dataManager: DataManager
+    @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
     
     var body: some View {
-        @State var backgroundColor: Color = colorScheme  == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
-        
         ZStack {
             Color(backgroundColor).ignoresSafeArea()
-            VStack(spacing: 20) {
-                HStack {
-                    if dataManager.isLoggedIn == false {
-                        Image(systemName: "person.crop.circle")
-                            .font(.title)
-                            .padding(.vertical)
-                        Spacer()
-                        Button(action: {dataManager.showLoginSheet = true}) {
-                            Text("Sign In")
-                                .font(.title2)
-                                .foregroundStyle(Color.primary)
-                                .padding(10)
-                        }
-                        .glassEffect(.clear.tint(Color.green))
-                        .padding(.trailing, -10)
-                            
-                    } else {
-                        Image(systemName: "person.crop.circle")
-                            .font(.title)
-                            .padding(.vertical)
-                        Spacer()
-                        Button(action: dataManager.logout) {
-                            Text("Sign Out")
-                                .font(.title2)
-                                .foregroundStyle(Color.primary)
-                                .padding(10)
-                        }
-                        .glassEffect(.clear.tint(Color.red))
-                        .padding(.trailing, -10)
-                    }
-                }
-                .padding(.horizontal, 50)
-                .glassEffect()
-                Spacer()
-            }
-            .padding(.horizontal, 40)
-            
-            
+            UserView()
         }
-        
+    }
+}
+
+struct UserView: View {
+    @EnvironmentObject var dataManager: DataManager
+    var buttonColor: Color {dataManager.isLoggedIn == false ? Color.red : Color.green}
+    var body: some View {
+        VStack(spacing: 20) {
+            HStack {
+                Image(systemName: "person.crop.circle")
+                    .font(.title)
+                Spacer()
+                Button(action: {dataManager.showLoginSheet = true}) {
+                    Text("Sign In")
+                        .font(.title2)
+                        .foregroundStyle(Color.primary)
+                        .padding(10)
+                }
+                .glassEffect(.clear.interactive().tint(buttonColor))
+            }
+            .frame(height: 70)
+            .padding(.horizontal, 50)
+            .glassEffect()
+            Spacer()
+        }
+        .padding(.horizontal, 40)
     }
 }
 

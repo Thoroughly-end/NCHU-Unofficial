@@ -7,15 +7,26 @@
 
 import SwiftUI
 
+struct LinkInfo: Identifiable {
+    let id = UUID()
+    let title: String
+    let destination: AnyView
+    let icon1: String
+    let icon2: String
+}
+
 struct Settings: View {
-    @Environment(\.colorScheme) var colorScheme
+    @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
+    
+    var links: [LinkInfo] = [
+        LinkInfo(title: "Account", destination: AnyView(Account()), icon1: "person.circle", icon2: "chevron.right"),
+        LinkInfo(title: "Info", destination: AnyView(AboutThisAPP()), icon1: "info.circle", icon2: "chevron.right"),
+    ]
     
     var body: some View {
-        @State var backgroundColor: Color = colorScheme  == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
         NavigationView {
             ZStack {
                 Color(backgroundColor).ignoresSafeArea()
-                
                 VStack {
                     HStack {
                         Text("Settings")
@@ -25,49 +36,10 @@ struct Settings: View {
                             .padding(.top, 20)
                         Spacer()
                     }
-                    
                     VStack(spacing: 20) {
-                        NavigationLink(destination: Account()) {
-                            HStack {
-                                Image(systemName: "person.circle")
-                                    .font(.title)
-                                    .padding(.bottom)
-                                    
-                                Spacer()
-                                Text("Account")
-                                    .font(.title2)
-                                    .padding(.bottom)
-
-                                Image(systemName: "chevron.right")
-                                    .font(.title2)
-                                    .padding(.bottom)
-                            }
-                            .foregroundStyle(Color.primary)
+                        ForEach (links) { link in
+                                LinkView(item: link)
                         }
-                        .padding(.horizontal, 50)
-                        .padding(.top, 20)
-                        .glassEffect()
-                        
-                        NavigationLink(destination: AboutThisAPP()) {
-                            HStack {
-                                Image(systemName: "info.circle")
-                                    .font(.title)
-                                    .padding(.bottom)
-                                Spacer()
-                                Text("Info")
-                                    .font(.title2)
-                                    .padding(.bottom)
-                                Image(systemName: "chevron.right")
-                                    .font(.title2)
-                                    .padding(.bottom)
-                            }
-                            .foregroundStyle(Color.primary)
-                                
-                        }
-                        .padding(.horizontal, 50)
-                        .padding(.top, 20)
-                        .glassEffect()
-                        
                         Spacer()
                     }
                     .padding(40)
@@ -77,6 +49,28 @@ struct Settings: View {
     }
 }
 
+private struct LinkView: View {
+    let item: LinkInfo
+    
+    var body: some View {
+        NavigationLink(destination: item.destination) {
+            HStack {
+                Image(systemName: item.icon1)
+                    .font(.title)
+                Spacer()
+                Text(item.title)
+                    .font(.title2)
+
+                Image(systemName: item.icon2)
+                    .font(.title2)
+            }
+            .foregroundStyle(Color.primary)
+        }
+        .padding(.vertical, 20)
+        .padding(.horizontal, 50)
+        .glassEffect()
+    }
+}
 #Preview {
     ContentView()
         .environmentObject(DataManager())

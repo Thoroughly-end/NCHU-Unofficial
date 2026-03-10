@@ -23,17 +23,14 @@ enum APPTab: String, MorphingTabProtocol {
 }
 
 struct ContentView: View {
-    @State private var activeTab: APPTab = .schedule
+    @State private var activeTab: APPTab = .settings
     @State private var isExpanded: Bool = false
     
-    @Environment(\.colorScheme) var colorScheme
+    @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
     @EnvironmentObject var dataManager: DataManager
     
     
     var body: some View {
-        @State var backgroundColor: Color = colorScheme  == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
-        @State var textColor: Color = colorScheme == .dark ? Color.white : Color.black
-        
         ZStack {
             Color(backgroundColor).ignoresSafeArea()
             
