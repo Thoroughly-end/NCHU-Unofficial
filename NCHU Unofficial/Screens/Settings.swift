@@ -7,10 +7,15 @@
 
 import SwiftUI
 
+enum SettingsRoute: Hashable {
+    case account
+    case info
+}
+
 struct LinkInfo: Identifiable {
     let id = UUID()
     let title: String
-    let destination: AnyView
+    let route: SettingsRoute?
     let icon1: String
     let icon2: String
 }
@@ -19,14 +24,15 @@ struct Settings: View {
     @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
     
     var links: [LinkInfo] = [
-        LinkInfo(title: "Account", destination: AnyView(Account()), icon1: "person.circle", icon2: "chevron.right"),
-        LinkInfo(title: "Info", destination: AnyView(AboutThisAPP()), icon1: "info.circle", icon2: "chevron.right"),
+        LinkInfo(title: "Account", route: .account, icon1: "person.circle", icon2: "chevron.right"),
+        LinkInfo(title: "Info", route: .info, icon1: "info.circle", icon2: "chevron.right"),
     ]
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 Color(backgroundColor).ignoresSafeArea()
+                
                 VStack {
                     HStack {
                         Text("Settings")
@@ -36,13 +42,20 @@ struct Settings: View {
                             .padding(.top, 20)
                         Spacer()
                     }
+                    
                     VStack(spacing: 20) {
                         ForEach (links) { link in
-                                LinkView(item: link)
+                            LinkView(item: link)
                         }
                         Spacer()
                     }
                     .padding(40)
+                }
+            }
+            .navigationDestination(for: SettingsRoute.self) { route in
+                switch route {
+                case .account: Account()
+                case .info: AboutThisAPP()
                 }
             }
         }
@@ -53,7 +66,7 @@ private struct LinkView: View {
     let item: LinkInfo
     
     var body: some View {
-        NavigationLink(destination: item.destination) {
+        NavigationLink(value: item.route) {
             HStack {
                 Image(systemName: item.icon1)
                     .font(.title)
@@ -65,12 +78,15 @@ private struct LinkView: View {
                     .font(.title2)
             }
             .foregroundStyle(Color.primary)
+            .padding(.vertical, 20)
+            .padding(.horizontal, 50)
+            .glassEffect()
         }
-        .padding(.vertical, 20)
-        .padding(.horizontal, 50)
-        .glassEffect()
+        .buttonStyle(.plain)
     }
 }
+
+
 #Preview {
     ContentView()
         .environmentObject(DataManager())
