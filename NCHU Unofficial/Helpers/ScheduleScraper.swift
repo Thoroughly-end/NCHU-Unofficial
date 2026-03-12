@@ -50,11 +50,11 @@ class ScheduleScraper {
         //print(try document.select("table").size())
         let tables = try document.select("table")
         
-        guard tables.count > 1 else {
+        guard tables.count > 0 else {
             print("Can not find schedule")
             return result
         }
-        let table = tables[1]
+        let table = tables[0]
         
         let rows = try table.select("tr").array()
         for row in rows.dropFirst() {

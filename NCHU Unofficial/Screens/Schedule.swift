@@ -25,12 +25,12 @@ struct Schedule: View {
             if isCheckingSession {
                 ProgressView("Checking Session")
             } else {
-                if dataManager.isLoggedIn {
+                if !dataManager.scheduleList.items.isEmpty {
                     let days = 0..<8
                     let times = 1..<14
                     
                     if dataManager.scheduleList.items.count < 91 {
-                        Text("Not enough data")
+                        Text("Insufficient data")
                     } else {
                         VStack(alignment: .leading) {
                             HStack {
@@ -135,6 +135,19 @@ struct Schedule: View {
                 Task {
                     if let newSchedule = await ScheduleScraper.shared.fetchSchedule() {
                         dataManager.scheduleList.items = newSchedule
+                        let period: SchedulePeriod = .init(schedule: newSchedule)
+                        for p in period.periods {
+                            print(p.day)
+                            if let name = p.info.name {
+                                print(name)
+                            }
+                            if let location = p.info.location {
+                                print(location)
+                            }
+                            
+                            print(p.range.lowerBound)
+                            print(p.range.upperBound)
+                        }
                         print("Manual refresh schedule successfully")
                     } else {
                         dataManager.scheduleList.items = []

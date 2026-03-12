@@ -10,7 +10,6 @@ import SwiftUI
 struct LoginSheetView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var dataManager: DataManager
-    
     @State private var isPreparingCookies: Bool = false
     
     var body: some View {
@@ -72,7 +71,6 @@ struct LoginSheetView: View {
     }
     
     // MARK: - Helper Methods
-
     private func saveCookiesForScraping(_ cookies: [HTTPCookie]) {
         let cookieStorage = HTTPCookieStorage.shared
         for cookie in cookies {

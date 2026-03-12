@@ -25,7 +25,6 @@ enum APPTab: String, MorphingTabProtocol {
 struct ContentView: View {
     @State private var activeTab: APPTab = .settings
     @State private var isExpanded: Bool = false
-    
     @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
     @EnvironmentObject var dataManager: DataManager
     
@@ -33,8 +32,6 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             Color(backgroundColor).ignoresSafeArea()
-            
-            
             switch activeTab {
             case .schedule:
                 Schedule()
@@ -47,12 +44,9 @@ struct ContentView: View {
             }
             VStack {
                 Spacer()
-                MorphingTabBar(activeTab: $activeTab, isExpanded: $isExpanded) {
-                    
-                }
-                .padding(.horizontal, 20)
+                MorphingTabBar(activeTab: $activeTab, isExpanded: $isExpanded) {}.padding(.horizontal, 20)
             }
-            .padding(.bottom, 20)
+            .padding(.bottom, 30)
             .ignoresSafeArea(.all , edges: .bottom)
         }
         .onAppear() {
