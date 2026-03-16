@@ -88,7 +88,7 @@ struct DeveloperInfoRow: View {
     @Binding var showCopiedToast: Bool
     
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             HStack {
                 Image(systemName: info.row1.icon)
                     .font(.title2)

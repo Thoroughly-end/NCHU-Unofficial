@@ -183,7 +183,7 @@ struct RecentHomeworkCard: View {
             .glassEffect(.regular.interactive())
             .frame(maxWidth: .infinity, minHeight: 120)
             .padding(.horizontal, 30)
-            .padding(.vertical, 10)
+            //.padding(.vertical, 10)
             .onTapGesture {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                     isExpanded.toggle()

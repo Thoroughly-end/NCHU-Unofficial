@@ -53,7 +53,6 @@ struct Courses: View {
                             ScrollView(.vertical) {
                                 VStack {}.frame(height: 20)
                                 renderAllCoursesView()
-                                
                             }
                         } else {
                             ScrollView(.vertical) {
