@@ -23,7 +23,7 @@ enum APPTab: String, MorphingTabProtocol {
 }
 
 struct ContentView: View {
-    @State private var activeTab: APPTab = .settings
+    @State private var activeTab: APPTab = .schedule
     @State private var isExpanded: Bool = false
     @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
     @EnvironmentObject var dataManager: DataManager
@@ -35,10 +35,13 @@ struct ContentView: View {
             switch activeTab {
             case .schedule:
                 Schedule()
+                    .ignoresSafeArea(.all, edges: .bottom)
             case .reminders:
                 Announcements()
+                    .ignoresSafeArea(.all, edges: .bottom)
             case .courses:
                 Courses()
+                    .ignoresSafeArea(.all, edges: .bottom)
             case .settings:
                 Settings()
             }

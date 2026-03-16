@@ -10,10 +10,11 @@ import SwiftUI
 struct Schedule: View {
     @State private var isCheckingSession: Bool = false
     @EnvironmentObject var dataManager: DataManager
-    @Environment(\.colorScheme) var colorScheme
+    let elementBgColor = Color("ElementBackgroundColor")
     
-    var backgroundColor: Color {
-        colorScheme == .dark ? Color(.sRGB, red: 0.11, green: 0.11, blue: 0.12, opacity: 1) : Color.white
+    private var processedPeriods: [Period] {
+        guard !dataManager.scheduleList.items.isEmpty else { return [] }
+        return SchedulePeriod(schedule: dataManager.scheduleList.items).periods
     }
     
     init() {
@@ -26,9 +27,6 @@ struct Schedule: View {
                 ProgressView("Checking Session")
             } else {
                 if !dataManager.scheduleList.items.isEmpty {
-                    let days = 0..<8
-                    let times = 1..<14
-                    
                     if dataManager.scheduleList.items.count < 91 {
                         Text("Insufficient data")
                     } else {
@@ -56,31 +54,7 @@ struct Schedule: View {
                                     .padding(.top, 10)
                                 }
                             }
-                            .padding(.bottom, -20)
-                            
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(alignment: .top, spacing: 10) {
-                                    ForEach(days, id: \.self) { day in
-                                        DayCard(day: day)
-                                            .padding(.top, 20)
-                                    }
-                                }
-                                ScrollView(.vertical, showsIndicators: false) {
-                                    ForEach(times, id: \.self) { time in
-                                        HStack (alignment: .top, spacing: 10) {
-                                            TimeCard(time: time)
-                                            ForEach(days, id: \.self) { day in
-                                                if day != 0 {
-                                                    Card(course: dataManager.scheduleList.items[(time - 1) * 7 + day - 1])
-                                                }
-                                            }
-                                        }
-                                    }
-                                    
-                                    VStack {}.frame(height: 70)
-                                }
-                            }
-                            .ignoresSafeArea()
+                            scheduleTable
                             Spacer()
                         }
                     }
@@ -92,6 +66,66 @@ struct Schedule: View {
         .onAppear {
             initialLoad()
         }
+    }
+    
+    private var scheduleTable: some View {
+        VStack {
+            ScrollView(.horizontal, showsIndicators: false) {
+                let days = 0...7
+                HStack(spacing: 10) {
+                    ForEach(days, id: \.self) { day in
+                        DayCard(day: day)
+                    }
+                }
+                .padding(10)
+                
+                
+                ScrollView(.vertical, showsIndicators: false) {
+                    let periods = 1...13
+                    HStack(spacing: 10) {
+                        VStack {
+                            ForEach(periods, id: \.self) { period in
+                                TimeCard(time: period)
+                            }
+                        }
+                        .frame(width: 40)
+                        
+                        
+                        HStack(spacing: 10) {
+                            ForEach(days.dropFirst(), id: \.self) { day in
+                                VStack(alignment: .leading, spacing: 0) {
+                                    ZStack(alignment: .top) {
+                                        Color.clear
+                                            .frame(height: CGFloat(2070))
+                                        let today = processedPeriods.filter { $0.day == day }
+                                        ForEach(today) { period in
+                                            let start = period.range.lowerBound
+                                            
+                                            Card(period: period)
+                                                .offset(y: CGFloat((start - 1) * 160))
+                                        }
+                                    }
+                                    .frame(width: 70, height: .infinity, alignment: .top)
+                                }
+                            }
+                        }
+                        .frame(width: 550, height: 2070, alignment: .top)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 10)
+                }
+                
+            }
+            .clipShape(.rect(cornerRadius: 30))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    
+        .background(
+            RoundedRectangle(cornerRadius: 30)
+                .fill(elementBgColor)
+        )
+        .padding(.horizontal, 30)
+        .padding(.bottom, 100)
     }
     
     private func initialLoad() {
@@ -165,4 +199,9 @@ struct Schedule: View {
         
         
     }
+}
+
+#Preview {
+    Schedule()
+        .environmentObject(DataManager())
 }

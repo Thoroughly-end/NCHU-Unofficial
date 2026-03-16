@@ -77,7 +77,7 @@ struct AboutThisAPP: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .padding(.bottom, 50)
+        .padding(.bottom, 70)
         .animation(.spring(), value: showCopiedToast)
         .allowsHitTesting(false)
     }

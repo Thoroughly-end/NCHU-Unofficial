@@ -43,9 +43,6 @@ class DataManager: ObservableObject {
         hasiLearningCookies = false
         CookieManager.shared.clearCookies()
     }
-    
-    
-    
 }
 
 
@@ -79,35 +76,35 @@ struct ScheduleData: Codable, Equatable {
     var location: String?
     
     init(text: String) {
-        if text == "nil" {
-            name = nil
-            teacher = nil
-            location = nil
+        guard text != "nil", !text.isEmpty else { return }
+        
+        let parts = text.split(separator: " ").map(String.init)
+        
+        guard parts.count > 1 else {
+            self.name = text.removingBracket()
             return
         }
-        let data = text.split(separator: " ")
         
-        if data.isEmpty {
-            name = nil
-            teacher = nil
-            location = nil
-        } else if data.count == 1 {
-            name = String(data[0]).removingBracket()
-            teacher = nil
-            location = nil
-        } else if data.count == 2 {
-            name = String(data[0]).removingBracket()
-            teacher = String(data[1])
-            location = nil
-        } else {
-            name = String(data[0]).removingBracket()
-            teacher = String(data[1])
-            location = String(data[2])
+        if let lastPart = parts.last {
+            let info = parseTeacherAndRoom(lastPart)
+            self.teacher = info.teacher
+            self.location = info.room
+            
+            if self.teacher == nil && self.location == nil {
+                self.teacher = lastPart
+            }
         }
+        let nameParts = parts.dropLast()
+        self.name = nameParts.joined(separator: " ").removingBracket()
     }
     
-    static func == (lhs: ScheduleData, rhs: ScheduleData) -> Bool {
-        return lhs.name == rhs.name && lhs.teacher == rhs.teacher && lhs.location == rhs.location
+    private func parseTeacherAndRoom(_ input: String) -> (teacher: String?, room: String?) {
+        let regex = /^(.+?)([A-Za-z]{1,2}\d{3})$/
+
+        if let match = input.wholeMatch(of: regex) {
+            return (String(match.output.1), String(match.output.2))
+        }
+        return (nil, nil)
     }
 }
 
