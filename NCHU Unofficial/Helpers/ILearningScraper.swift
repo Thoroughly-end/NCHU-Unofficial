@@ -431,7 +431,7 @@ class ILearningScraperPrepare: NSObject, WKNavigationDelegate {
                 }
             }
             
-        } else if url.contains("cas_login") {
+        } else if url.contains("ccidp.nchu.edu.tw/login?") {
             print("Session Expired")
             CookieManager.shared.clearCookies()
         } else if url.contains("challenges.cloudflare.com") && url.contains("challenge-platform") {

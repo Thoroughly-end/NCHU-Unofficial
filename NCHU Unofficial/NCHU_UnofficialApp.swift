@@ -19,6 +19,10 @@ struct NCHU_UnofficialApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(dataManager)
+                .task { @MainActor in
+                    print("preloading WebBot...")
+                    _ = SharedWebBot.shared
+                }
         }
     }
 }

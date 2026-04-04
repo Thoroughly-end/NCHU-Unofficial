@@ -38,6 +38,7 @@ struct AboutThisAPP: View {
                 headerSection
                 DeveloperInfoRow(info: developer, showCopiedToast: $showCopiedToast)
                 InfoRow(item: aboutItems[0])
+                StatementView
                 Spacer()
             }
             .padding(20)
@@ -80,6 +81,13 @@ struct AboutThisAPP: View {
         .padding(.bottom, 70)
         .animation(.spring(), value: showCopiedToast)
         .allowsHitTesting(false)
+    }
+    
+    private var StatementView: some View {
+        VStack {
+            Text("This is a third-party, noneprofit app, not affiliated with NCHU created solely for educational purposes and to provide convenience for my peers.")
+                .foregroundColor(.secondary)
+        }
     }
 }
 

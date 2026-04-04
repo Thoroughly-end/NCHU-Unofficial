@@ -66,6 +66,9 @@ struct Schedule: View {
         .onAppear {
             initialLoad()
         }
+        .onChange(of: dataManager.hasCportalCookies) {
+            initialLoad()
+        }
     }
     
     private var scheduleTable: some View {
@@ -105,7 +108,6 @@ struct Schedule: View {
                                                 .offset(y: CGFloat((start - 1) * 160))
                                         }
                                     }
-                                    .frame(width: 70, height: .infinity, alignment: .top)
                                 }
                             }
                         }

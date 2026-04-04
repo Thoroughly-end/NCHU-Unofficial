@@ -76,6 +76,9 @@ struct Announcements: View {
         .onAppear() {
             initialLoadIfNeeded()
         }
+        .onChange(of: dataManager.hasiLearningCookies) {
+            initialLoadIfNeeded()
+        }
     }
     
     private func initialLoadIfNeeded() {

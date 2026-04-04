@@ -37,6 +37,12 @@ struct SSOWebView: UIViewRepresentable {
         }
     }
     
+    static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            SharedWebBot.shared.attachToWindow(window)
+        }
+    }
     
     class Coordinator: NSObject, WKNavigationDelegate {
         var parent: SSOWebView
