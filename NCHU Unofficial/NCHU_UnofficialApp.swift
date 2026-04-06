@@ -22,6 +22,12 @@ struct NCHU_UnofficialApp: App {
                 .task { @MainActor in
                     print("preloading WebBot...")
                     _ = SharedWebBot.shared
+                    SessionManager.shared.verifyCookieStatus { isValid in
+                        if !isValid {
+                            print("Session expired, please login again")
+                            dataManager.logout()
+                        }
+                    }
                 }
         }
     }

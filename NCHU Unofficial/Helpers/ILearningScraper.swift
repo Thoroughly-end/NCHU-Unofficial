@@ -311,9 +311,9 @@ class ILearningScraper {
             
             let dl = try document.select("dl.dl-horizontal")
             let startStr = try dl.select("dt:contains(開放繳交) + dd").text()
-            //print(startStr)
+            print(startStr)
             let dueStr = try dl.select("dt:contains(繳交期限) + dd").text()
-            //print(dueStr)
+            print(dueStr)
             let proportion = try dl.select("dt:contains(成績比重) + dd").text()
             var explanationHTML = try dl.select("dt:contains(說明) + dd").html()
             explanationHTML = explanationHTML.replacingOccurrences(of: "<br>", with: "\n")

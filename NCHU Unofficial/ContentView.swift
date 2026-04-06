@@ -8,14 +8,12 @@ import SwiftUI
 
 enum APPTab: String, MorphingTabProtocol {
     case schedule = "schedule"
-    case reminders = "reminders"
     case courses = "courses"
     case settings = "settings"
     
     var symbolImage: String {
         return switch self {
         case .schedule: "calendar"
-        case .reminders: "bell.fill"
         case .courses: "book.closed.fill"
         case .settings: "gearshape.fill"
         }
@@ -36,14 +34,12 @@ struct ContentView: View {
             case .schedule:
                 Schedule()
                     .ignoresSafeArea(.all, edges: .bottom)
-            case .reminders:
-                Announcements()
-                    .ignoresSafeArea(.all, edges: .bottom)
             case .courses:
-                Courses()
+                AllCourses()
                     .ignoresSafeArea(.all, edges: .bottom)
             case .settings:
                 Settings()
+                    .ignoresSafeArea(.all, edges: .bottom)
             }
             VStack {
                 Spacer()

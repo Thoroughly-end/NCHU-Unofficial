@@ -162,7 +162,6 @@ extension String {
 }
 
 class AnnouncementData: Identifiable, ObservableObject {
-    let id = UUID()
     var courseID: Int
     var title: String
     var url: String
