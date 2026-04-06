@@ -10,6 +10,7 @@ import SwiftUI
 struct AllCourses: View {
     @EnvironmentObject var dataManager: DataManager
     @State private var isCheckingSession: Bool = false
+    @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
     
     let columns = [
         GridItem(.flexible(), spacing: 15),
@@ -18,28 +19,41 @@ struct AllCourses: View {
     
     var body: some View {
         NavigationStack {
-            if isCheckingSession {
-                ProgressView("Checking Session")
-            } else {
+            ZStack {
+                Color(backgroundColor)
+                    .ignoresSafeArea()
                 VStack {
-                    headerSection
-                        .padding(.bottom, 20)
-                    ScrollView {
-                        VStack(alignment: .leading) {
-                            LazyVGrid(columns: columns, spacing: 15) {
-                                ForEach(dataManager.courses) { course in
-                                    NavigationLink(destination: CourseView(course: course)) {
-                                        courseCard(for: course)
+                    if isCheckingSession {
+                        ProgressView("Checking Session")
+                    } else {
+                        if !dataManager.isLoggedIn {
+                            Text("Please login")
+                        } else {
+                            VStack {
+                                headerSection
+                                    .padding(.bottom, 20)
+                                    .padding(.horizontal, 30)
+                                ScrollView {
+                                    VStack(alignment: .leading) {
+                                        LazyVGrid(columns: columns, spacing: 15) {
+                                            ForEach(dataManager.courses) { course in
+                                                NavigationLink(destination: CourseView(course: course)) {
+                                                    courseCard(for: course)
+                                                }
+                                                .buttonStyle(.plain)
+                                            }
+                                        }
                                     }
-                                    .buttonStyle(.plain)
+                                    .padding(.horizontal, 30)
+                                    VStack {}.frame(height: 30)
                                 }
                             }
+                            .toolbar(.hidden, for: .navigationBar)
                         }
-                        VStack {}.frame(height: 30)
                     }
                 }
-                .padding(30)
             }
+            
         }
         .onAppear() {
             initialLoadIfNeeded()
@@ -47,10 +61,23 @@ struct AllCourses: View {
     }
     
     var headerSection: some View {
-        Text("All Courses")
-            .font(.largeTitle)
-            .bold()
-            .frame(maxWidth: .infinity, alignment: .leading)
+        HStack {
+            Text("All Courses")
+                .font(.largeTitle)
+                .bold()
+            Spacer()
+            
+            NavigationLink(destination: RecentAnnouncement()) {
+                VStack {
+                    Image(systemName: "bell.fill")
+                        .foregroundStyle(Color.primary)
+                        .font(.title2)
+                }
+                .frame(width: 60, height: 60)
+                .glassEffect(.regular.interactive())
+            }
+        }
+        
     }
     
     @ViewBuilder

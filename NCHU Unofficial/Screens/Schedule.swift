@@ -30,33 +30,13 @@ struct Schedule: View {
                     if dataManager.scheduleList.items.count < 91 {
                         Text("Insufficient data")
                     } else {
-                        VStack(alignment: .leading) {
-                            HStack {
-                                Text("My Schedule")
-                                    .font(.largeTitle)
-                                    .bold()
-                                    .padding(.leading, 50)
-                                    .padding(.top, 10)
-                                Spacer()
-                                
-                                Button {
-                                    manualRefresh()
-                                } label: {
-                                    VStack(alignment: .center) {
-                                        Image(systemName: "arrow.trianglehead.counterclockwise")
-                                            .font(.title3)
-                                            .padding(.horizontal)
-                                            .foregroundStyle(Color.primary)
-                                    }
-                                    .frame(width: 60, height: 60)
-                                    .glassEffect()
-                                    .padding(.horizontal)
-                                    .padding(.top, 10)
-                                }
-                            }
+                        VStack {
+                            headerSection
+                                .padding(.bottom, 20)
                             scheduleTable
                             Spacer()
                         }
+                        .padding(.horizontal,30)
                     }
                 } else {
                     Text("Please login")
@@ -68,6 +48,28 @@ struct Schedule: View {
         }
         .onChange(of: dataManager.hasCportalCookies) {
             initialLoad()
+        }
+    }
+    
+    private var headerSection: some View {
+        HStack {
+            Text("My Schedule")
+                .font(.largeTitle)
+                .bold()
+            Spacer()
+            
+            Button {
+                manualRefresh()
+            } label: {
+                VStack(alignment: .center) {
+                    Image(systemName: "arrow.trianglehead.counterclockwise")
+                        .font(.title3)
+                        .padding(.horizontal)
+                        .foregroundStyle(Color.primary)
+                }
+                .frame(width: 60, height: 60)
+                .glassEffect(.regular.interactive())
+            }
         }
     }
     
@@ -126,7 +128,6 @@ struct Schedule: View {
             RoundedRectangle(cornerRadius: 30)
                 .fill(elementBgColor)
         )
-        .padding(.horizontal, 30)
         .padding(.bottom, 100)
     }
     
