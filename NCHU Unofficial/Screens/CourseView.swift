@@ -20,14 +20,14 @@ struct CourseView: View {
             Color(backgroundColor).ignoresSafeArea()
             VStack(spacing: 20) {
                 headerSection
-                    .padding(.bottom, 20)
                 announcementsSection
                 homeworkSection
                 footerSection
                 Spacer()
             }
-            .padding(30)
+            .padding(.horizontal, 30)
         }
+        .ignoresSafeArea(.all, edges: .bottom)
         .sheet(item: $selectedAnnouncement) { announcement in
             AnnouncementDetailView(announcement: announcement, isLoading: $isLoading)
                 .presentationDetents([.medium, .large])
@@ -80,7 +80,7 @@ struct CourseView: View {
                                 }
                                 
                             }
-                            .frame(maxWidth:.infinity, maxHeight: 80, alignment: .leading)
+                            .frame(maxWidth: .infinity, maxHeight: 80, alignment: .leading)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
@@ -141,6 +141,7 @@ struct CourseView: View {
                                     }
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: 80, alignment: .leading)
+                                .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
                             
@@ -237,21 +238,24 @@ struct AnnouncementDetailView: View {
                                         Button {
                                             downloadAndShare(attachment: attachment)
                                         } label: {
-                                            HStack {
-                                                if downloadingAttachmentID == attachment.id {
-                                                    ProgressView()
-                                                        .scaleEffect(0.8)
-                                                        .frame(width: 20, height: 20)
-                                                } else {
-                                                    Image(systemName: "doc.text")
-                                                        .foregroundColor(.gray)
+                                            VStack {
+                                                HStack {
+                                                    if downloadingAttachmentID == attachment.id {
+                                                        ProgressView()
+                                                            .scaleEffect(0.8)
+                                                            .frame(width: 20, height: 20)
+                                                    } else {
+                                                        Image(systemName: "doc.text")
+                                                            .foregroundColor(.gray)
+                                                    }
+                                                    
+                                                    Text(attachment.name)
+                                                        .font(.caption)
+                                                        .foregroundColor(.blue)
+                                                        .underline()
+                                                        .lineLimit(1)
                                                 }
-                                                
-                                                Text(attachment.name)
-                                                    .font(.caption)
-                                                    .foregroundColor(.blue)
-                                                    .underline()
-                                                    .lineLimit(1)
+                                                .padding(4)
                                             }
                                             .glassEffect(.regular.interactive())
                                         }

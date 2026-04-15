@@ -11,6 +11,8 @@ import WebKit
 struct SSOWebView: UIViewRepresentable {
     let targetURLString: String
     @Binding var isLoggedIn: Bool
+    @Binding var isLoadingPage: Bool
+    @Binding var pageErrorMessage: String?
     
     var onLoginSuccess: ([HTTPCookie]) -> Void
     
@@ -19,7 +21,11 @@ struct SSOWebView: UIViewRepresentable {
     }
     
     func makeUIView(context: Context) -> WKWebView {
-        let webView = SharedWebBot.shared.webView
+        let config = WKWebViewConfiguration()
+        config.websiteDataStore = WKWebsiteDataStore.default()
+        
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
         webView.navigationDelegate = context.coordinator
         webView.alpha = 1.0
         webView.isUserInteractionEnabled = true
@@ -32,8 +38,16 @@ struct SSOWebView: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: WKWebView, context: Context) {
-        if uiView.url == nil, let url = URL(string: targetURLString) {
-            uiView.load(URLRequest(url: url))
+        if isLoadingPage, pageErrorMessage == nil {
+            if let _ = uiView.url {
+                if !uiView.isLoading {
+                    uiView.reload()
+                }
+            } else if !uiView.isLoading {
+                if let url = URL(string: targetURLString) {
+                    uiView.load(URLRequest(url: url))
+                }
+            }
         }
     }
     
@@ -59,7 +73,17 @@ struct SSOWebView: UIViewRepresentable {
             decisionHandler(.allow)
         }
         
+        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+            DispatchQueue.main.async {
+                self.parent.isLoadingPage = true
+                self.parent.pageErrorMessage = nil
+            }
+        }
+        
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            DispatchQueue.main.async {
+                self.parent.isLoadingPage = false
+            }
             guard let urlString = webView.url?.absoluteString else { return }
             print("Loaded：\(urlString)")
             
@@ -80,6 +104,20 @@ struct SSOWebView: UIViewRepresentable {
                         }
                     }
                 }
+            }
+        }
+        
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            DispatchQueue.main.async {
+                self.parent.isLoadingPage = false
+                self.parent.pageErrorMessage = error.localizedDescription
+            }
+        }
+        
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            DispatchQueue.main.async {
+                self.parent.isLoadingPage = false
+                self.parent.pageErrorMessage = error.localizedDescription
             }
         }
     }

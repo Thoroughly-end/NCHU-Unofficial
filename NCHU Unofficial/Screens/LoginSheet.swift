@@ -11,6 +11,8 @@ struct LoginSheetView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var dataManager: DataManager
     @State private var isPreparingCookies: Bool = false
+    @State private var isLoadingPage: Bool = true
+    @State private var pageErrorMessage: String? = nil
     
     var body: some View {
         NavigationView {
@@ -18,6 +20,8 @@ struct LoginSheetView: View {
                 SSOWebView(
                     targetURLString: "https://ccidp.nchu.edu.tw/login",
                     isLoggedIn: $dataManager.isLoggedIn,
+                    isLoadingPage: $isLoadingPage,
+                    pageErrorMessage: $pageErrorMessage,
                     onLoginSuccess: { cookies in
                         print("Got \(cookies.count) Cookies")
                         
@@ -42,18 +46,44 @@ struct LoginSheetView: View {
                 )
                 .ignoresSafeArea(.container, edges: .bottom)
                 
-                if isPreparingCookies {
+                if isLoadingPage {
+                    ProgressView("Loading Portal...")
+                        .scaleEffect(1.2)
+                        .padding(30)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(10)
+                }
+                
+                if let errorMessage = pageErrorMessage {
                     VStack {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                            .padding(.bottom, 10)
-                        Text("Passing Traffic Shield...")
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.red)
+                            .font(.largeTitle)
+                        Text("Network Error")
                             .font(.headline)
+                            .padding(.top, 5)
+                        Text(errorMessage)
+                            .font(.caption)
                             .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        Button("Retry") {
+                            pageErrorMessage = nil
+                            isLoadingPage = true
+                        }
+                        .padding(.top, 10)
                     }
                     .padding(30)
                     .background(.ultraThinMaterial)
                     .cornerRadius(15)
+                }
+                
+                if isPreparingCookies {
+                    ProgressView("Fetching TS Cookies...")
+                        .scaleEffect(1.2)
+                        .padding(30)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(10)
                 }
             }
             .navigationTitle("Login")
