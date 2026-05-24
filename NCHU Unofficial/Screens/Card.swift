@@ -13,7 +13,7 @@ struct Card: View {
     
     var height: CGFloat {
         let duration: Int = period.range.upperBound - period.range.lowerBound + 1
-        return CGFloat(duration * 150 + 10 * (duration - 1))
+        return CGFloat(duration * 100 + 10 * (duration - 1))
     }
     
     var body: some View {
@@ -178,7 +178,7 @@ struct TimeCard: View {
             .font(.system(size: 13))
             .foregroundStyle(Color.primary)
         }
-        .frame(width: 40, height: 150)
+        .frame(width: 40, height: 100)
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color(cardBackgroundColor))

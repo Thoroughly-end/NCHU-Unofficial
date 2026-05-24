@@ -11,6 +11,7 @@ struct AllCourses: View {
     @EnvironmentObject var dataManager: DataManager
     @State private var isCheckingSession: Bool = false
     @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
+    @StateObject private var loader = CourseDataLoader.shared
     
     let columns = [
         GridItem(.flexible(), spacing: 15),
@@ -100,36 +101,10 @@ struct AllCourses: View {
     }
     
     private func initialLoadIfNeeded() {
-        guard dataManager.isLoggedIn else { return }
-        guard dataManager.hasiLearningCookies else { return }
         guard dataManager.courses.isEmpty else { return }
         
-        isCheckingSession = true
-        
-        SessionManager.shared.verifyCookieStatus { isValid in
-            if isValid {
-                print("Session is valid, start to fetch courses")
-                Task { @MainActor in
-                    let courses = await ILearningScraper.shared.fetchCourses()
-                    let announcements = await ILearningScraper.shared.fetchLatestAnnouncements()
-                    
-                    for course in courses {
-                        let matchedAnnouncements = announcements.filter { $0.courseID == course.id }
-                        
-                        for announcement in matchedAnnouncements {
-                            course.addAnnouncement(announcement)
-                        }
-                        await ILearningScraper.shared.fetchHomeworkList(course: course)
-                    }
-                    dataManager.courses = courses
-                    isCheckingSession = false
-                }
-            } else {
-                DispatchQueue.main.async {
-                    dataManager.logout()
-                    isCheckingSession = false
-                }
-            }
+        Task {
+            await loader.loadAllCourses(dataManager: dataManager)
         }
     }
 }

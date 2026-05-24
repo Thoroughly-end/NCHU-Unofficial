@@ -23,33 +23,27 @@ struct Schedule: View {
     
     var body: some View {
         VStack {
-            if isCheckingSession {
-                ProgressView("Checking Session")
-            } else {
-                if !dataManager.scheduleList.items.isEmpty {
-                    if dataManager.scheduleList.items.count < 91 {
-                        Text("Insufficient data")
-                    } else {
-                        VStack {
-                            headerSection
-                                .padding(.bottom, 20)
-                            scheduleTable
-                            Spacer()
-                        }
-                        .padding(.horizontal,30)
-                    }
+            
+            if !dataManager.scheduleList.items.isEmpty {
+                if dataManager.scheduleList.items.count < 91 {
+                    Text("Insufficient data")
                 } else {
-                    Text("Please login")
+                    VStack {
+                        headerSection
+                            .padding(.bottom, 20)
+                        scheduleTable
+                        Spacer()
+                    }
+                    .padding(.horizontal,30)
                 }
+            } else {
+                Text("There is no schedule data, try login")
             }
         }
-        .onAppear {
-            initialLoad()
-        }
-        .onChange(of: dataManager.hasCportalCookies) {
-            initialLoad()
-        }
+        
     }
+    
+            
     
     private var headerSection: some View {
         HStack {
@@ -58,7 +52,7 @@ struct Schedule: View {
                 .bold()
             Spacer()
             
-            Button {
+            /*Button {
                 manualRefresh()
             } label: {
                 VStack(alignment: .center) {
@@ -69,7 +63,7 @@ struct Schedule: View {
                 }
                 .frame(width: 60, height: 60)
                 .glassEffect(.regular.interactive())
-            }
+            }*/
         }
     }
     
@@ -101,19 +95,19 @@ struct Schedule: View {
                                 VStack(alignment: .leading, spacing: 0) {
                                     ZStack(alignment: .top) {
                                         Color.clear
-                                            .frame(height: CGFloat(2070))
+                                            .frame(height: CGFloat(1420))
                                         let today = processedPeriods.filter { $0.day == day }
                                         ForEach(today) { period in
                                             let start = period.range.lowerBound
                                             
                                             Card(period: period)
-                                                .offset(y: CGFloat((start - 1) * 160))
+                                                .offset(y: CGFloat((start - 1) * 110))
                                         }
                                     }
                                 }
                             }
                         }
-                        .frame(width: 550, height: 2070, alignment: .top)
+                        .frame(width: 550, height: 1420, alignment: .top)
                     }
                     .padding(.horizontal, 10)
                     .padding(.bottom, 10)
@@ -134,70 +128,61 @@ struct Schedule: View {
     private func initialLoad() {
         guard dataManager.isLoggedIn else { return }
         guard dataManager.hasCportalCookies else { return }
-        
+
         if !dataManager.scheduleList.items.isEmpty {
             return
         }
-        
+
         isCheckingSession = true
-        SessionManager.shared.verifyCookieStatus { isValid in
+        Task { @MainActor in
+            let isValid = await SessionManager.shared.verifyCookieStatus()
             if isValid {
                 print("Session valid, Start to fetch schedule")
-                
-                Task { @MainActor in
-                    if let schedule = await ScheduleScraper.shared.fetchSchedule() {
-                        dataManager.scheduleList.items = schedule
-                    } else {
-                        dataManager.scheduleList.items = []
-                    }
-                    isCheckingSession = false
+                if let schedule = await ScheduleScraper.shared.fetchSchedule() {
+                    dataManager.scheduleList.items = schedule
+                } else {
+                    dataManager.scheduleList.items = []
                 }
             } else {
                 print("Session expired, please login again")
-                DispatchQueue.main.async {
-                    dataManager.logout()
-                    isCheckingSession = false
-                }
+                dataManager.logout()
             }
+            isCheckingSession = false
         }
     }
-    
+
     private func manualRefresh() {
         guard dataManager.isLoggedIn && dataManager.hasCportalCookies else { return }
-        
+
         isCheckingSession = true
-        SessionManager.shared.verifyCookieStatus { isValid in
+        Task { @MainActor in
+            let isValid = await SessionManager.shared.verifyCookieStatus()
             if isValid {
-                isCheckingSession = false
-                Task {
-                    if let newSchedule = await ScheduleScraper.shared.fetchSchedule() {
-                        dataManager.scheduleList.items = newSchedule
-                        let period: SchedulePeriod = .init(schedule: newSchedule)
-                        for p in period.periods {
-                            print(p.day)
-                            if let name = p.info.name {
-                                print(name)
-                            }
-                            if let location = p.info.location {
-                                print(location)
-                            }
-                            
-                            print(p.range.lowerBound)
-                            print(p.range.upperBound)
+                if let newSchedule = await ScheduleScraper.shared.fetchSchedule() {
+                    dataManager.scheduleList.items = newSchedule
+                    let period: SchedulePeriod = .init(schedule: newSchedule)
+                    for p in period.periods {
+                        print(p.day)
+                        if let name = p.info.name {
+                            print(name)
                         }
-                        print("Manual refresh schedule successfully")
-                    } else {
-                        dataManager.scheduleList.items = []
-                        print("Failure in manual refresh")
+                        if let location = p.info.location {
+                            print(location)
+                        }
+
+                        print(p.range.lowerBound)
+                        print(p.range.upperBound)
                     }
+                    print("Manual refresh schedule successfully")
+                } else {
+                    dataManager.scheduleList.items = []
+                    print("Failure in manual refresh")
                 }
             } else {
                 print("Session expired, please login again")
-                DispatchQueue.main.async {
-                    dataManager.logout()
-                    isCheckingSession = false
-                }
+                dataManager.logout()
             }
+            isCheckingSession = false
         }
         
         

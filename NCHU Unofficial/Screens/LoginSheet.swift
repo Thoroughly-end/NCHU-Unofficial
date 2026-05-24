@@ -37,6 +37,10 @@ struct LoginSheetView: View {
                         
                         Task {
                             await fetchAllSystemCookies()
+                            if let courses = await ScheduleScraper.shared.fetchSchedule() {
+                                dataManager.scheduleList.items = courses
+                            }
+                            
                         
                             isPreparingCookies = false
                             dataManager.showLoginSheet = false

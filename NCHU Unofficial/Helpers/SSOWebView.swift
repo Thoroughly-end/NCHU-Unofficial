@@ -82,6 +82,7 @@ struct SSOWebView: UIViewRepresentable {
         
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             DispatchQueue.main.async {
+                print("reached")
                 self.parent.isLoadingPage = false
             }
             guard let urlString = webView.url?.absoluteString else { return }

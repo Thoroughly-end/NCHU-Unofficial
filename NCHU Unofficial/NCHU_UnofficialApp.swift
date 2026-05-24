@@ -21,12 +21,11 @@ struct NCHU_UnofficialApp: App {
                 .environmentObject(dataManager)
                 .task { @MainActor in
                     print("preloading WebBot...")
-                    _ = SharedWebBot.shared
-                    SessionManager.shared.verifyCookieStatus { isValid in
-                        if !isValid {
-                            print("Session expired, please login again")
-                            dataManager.logout()
-                        }
+                    async let _ = SharedWebBot.shared
+                    async let isValid = await SessionManager.shared.verifyCookieStatus()
+                    if !(await isValid) {
+                        print("Session expired, please login again")
+                        dataManager.logout()
                     }
                 }
         }

@@ -11,9 +11,10 @@ import WebKit
 
 class ScheduleScraper {
     static let shared = ScheduleScraper()
+    let BaseURL = "https://cportal.nchu.edu.tw"
     
     func fetchSchedule() async -> [ScheduleData]? {
-        guard let url = URL(string: "https://cportal.nchu.edu.tw/cofsys/plsql/vocscrd_table") else { return nil }
+        guard let url = URL(string: "\(BaseURL)/cofsys/plsql/vocscrd_table") else { return nil }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         

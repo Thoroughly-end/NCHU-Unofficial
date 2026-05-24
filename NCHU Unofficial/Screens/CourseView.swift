@@ -257,7 +257,7 @@ struct AnnouncementDetailView: View {
                                                 }
                                                 .padding(4)
                                             }
-                                            .glassEffect(.regular.interactive())
+                                            .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
                                         }
                                     }
                                 }
