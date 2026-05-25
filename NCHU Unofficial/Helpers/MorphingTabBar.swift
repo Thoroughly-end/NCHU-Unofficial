@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-
 protocol MorphingTabProtocol: CaseIterable, Hashable {
     var symbolImage: String { get }
 }
