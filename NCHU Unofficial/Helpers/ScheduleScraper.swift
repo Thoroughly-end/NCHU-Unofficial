@@ -11,14 +11,14 @@ import WebKit
 
 class ScheduleScraper {
     static let shared = ScheduleScraper()
-    let BaseURL = "https://cportal.nchu.edu.tw"
+    let BaseURL = AppConstants.Network.CportalURL
     
     func fetchSchedule() async -> [ScheduleData]? {
         guard let url = URL(string: "\(BaseURL)/cofsys/plsql/vocscrd_table") else { return nil }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         
-        let safariUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+        let safariUserAgent = AppConstants.Network.userAgent
         request.setValue(safariUserAgent, forHTTPHeaderField: "User-Agent")
         
         do {

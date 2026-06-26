@@ -10,6 +10,7 @@ import SwiftUI
 struct Schedule: View {
     @State private var isCheckingSession: Bool = false
     @EnvironmentObject var dataManager: DataManager
+    @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
     let elementBgColor = Color("ElementBackgroundColor")
     
     private var processedPeriods: [Period] {
@@ -22,28 +23,27 @@ struct Schedule: View {
     }
     
     var body: some View {
-        VStack {
-            
-            if !dataManager.scheduleList.items.isEmpty {
-                if dataManager.scheduleList.items.count < 91 {
-                    Text("Insufficient data")
-                } else {
-                    VStack {
-                        headerSection
-                            .padding(.bottom, 20)
-                        scheduleTable
-                        Spacer()
+        ZStack {
+            Color(backgroundColor).ignoresSafeArea(.container)
+            VStack {
+                if !dataManager.scheduleList.items.isEmpty {
+                    if dataManager.scheduleList.items.count < 91 {
+                        Text("Insufficient data")
+                    } else {
+                        VStack {
+                            headerSection
+                                .padding(.bottom, 20)
+                            scheduleTable
+                            Spacer()
+                        }
+                        .padding(.horizontal,30)
                     }
-                    .padding(.horizontal,30)
+                } else {
+                    Text("There is no schedule data, try login")
                 }
-            } else {
-                Text("There is no schedule data, try login")
             }
         }
-        
     }
-    
-            
     
     private var headerSection: some View {
         HStack {

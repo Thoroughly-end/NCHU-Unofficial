@@ -8,11 +8,21 @@
 import SwiftUI
 
 struct LoginSheetView: View {
+    var username: String? = nil
+    var password: String? = nil
+    
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var dataManager: DataManager
     @State private var isPreparingCookies: Bool = false
     @State private var isLoadingPage: Bool = true
     @State private var pageErrorMessage: String? = nil
+    
+    private var credentials: (String, String)? {
+        if let username = username, let password = password {
+            return (username, password)
+        }
+        return nil
+    }
     
     var body: some View {
         NavigationView {
@@ -22,6 +32,7 @@ struct LoginSheetView: View {
                     isLoggedIn: $dataManager.isLoggedIn,
                     isLoadingPage: $isLoadingPage,
                     pageErrorMessage: $pageErrorMessage,
+                    autoFillCredentials: credentials,
                     onLoginSuccess: { cookies in
                         print("Got \(cookies.count) Cookies")
                         

@@ -22,6 +22,7 @@ class DataManager: ObservableObject {
         hasCportalCookies = false
         hasiLearningCookies = false
         CookieManager.shared.clearCookies()
+        CredentialHelper.shared.clearCredentials()
     }
 }
 

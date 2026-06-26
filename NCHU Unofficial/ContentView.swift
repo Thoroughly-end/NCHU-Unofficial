@@ -6,7 +6,7 @@
 //
 import SwiftUI
 
-enum APPTab: String, MorphingTabProtocol {
+enum APPTab: String {
     case schedule = "schedule"
     case courses = "courses"
     case settings = "settings"
@@ -22,32 +22,26 @@ enum APPTab: String, MorphingTabProtocol {
 
 struct ContentView: View {
     @State private var activeTab: APPTab = .schedule
-    @State private var isExpanded: Bool = false
-    @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
     @EnvironmentObject var dataManager: DataManager
     
-    
     var body: some View {
-        ZStack {
-            Color(backgroundColor).ignoresSafeArea()
-            switch activeTab {
-            case .schedule:
+        TabView(selection: $activeTab) {
+            Tab("Schedule", systemImage: APPTab.schedule.symbolImage, value: APPTab.schedule) {
                 Schedule()
-                    .ignoresSafeArea(.all, edges: .bottom)
-            case .courses:
+                    .ignoresSafeArea(.container, edges: .bottom)
+            }
+            
+            Tab("Courses", systemImage: APPTab.courses.symbolImage, value: APPTab.courses) {
                 AllCourses()
-                    .ignoresSafeArea(.all, edges: .bottom)
-            case .settings:
+                    .ignoresSafeArea(.container, edges: .bottom)
+            }
+            
+            Tab("Setting", systemImage: APPTab.settings.symbolImage, value: APPTab.settings) {
                 Settings()
-                    .ignoresSafeArea(.all, edges: .bottom)
+                    .ignoresSafeArea(.container, edges: .bottom)
             }
-            VStack {
-                Spacer()
-                MorphingTabBar(activeTab: $activeTab, isExpanded: $isExpanded) {}.padding(.horizontal, 20)
-            }
-            .padding(.bottom, 30)
-            .ignoresSafeArea(.all , edges: .bottom)
         }
+        .tint(.blue)
         .onAppear() {
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene, let window = windowScene.windows.first {
                 SharedWebBot.shared.attachToWindow(window)
@@ -58,7 +52,18 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $dataManager.showLoginSheet) {
-            LoginSheetView()
+            NavigationView {
+                Login()
+                    .navigationTitle("Login")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Cancel") {
+                                dataManager.showLoginSheet = false
+                            }
+                        }
+                    }
+            }
         }
     }
 }
