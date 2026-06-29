@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 class SessionManager {
     static let shared = SessionManager()
@@ -52,6 +53,10 @@ class SessionManager {
             print("Network error: \(error.localizedDescription)")
             return false
         }
+    }
+    
+    func reLogInIfNeeded() async {
+        
     }
 
     func invalidateCache() {

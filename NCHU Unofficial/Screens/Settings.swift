@@ -10,6 +10,7 @@ import SwiftUI
 enum SettingsRoute: Hashable {
     case account
     case info
+    case testPage
 }
 
 struct LinkInfo: Identifiable {
@@ -26,6 +27,7 @@ struct Settings: View {
     var links: [LinkInfo] = [
         LinkInfo(title: "Account", route: .account, icon1: "person.circle", icon2: "chevron.right"),
         LinkInfo(title: "Info", route: .info, icon1: "info.circle", icon2: "chevron.right"),
+        LinkInfo(title: "Test", route: .testPage, icon1: "hammer.circle", icon2: "chevron.right"),
     ]
     
     var body: some View {
@@ -56,6 +58,7 @@ struct Settings: View {
                 switch route {
                 case .account: Account()
                 case .info: AboutThisAPP()
+                case .testPage: TestPage()
                 }
             }
         }

@@ -22,10 +22,14 @@ struct NCHU_UnofficialApp: App {
                 .task { @MainActor in
                     print("preloading WebBot...")
                     async let _ = SharedWebBot.shared
-                    async let isValid = await SessionManager.shared.verifyCookieStatus()
-                    if !(await isValid) {
-                        print("Session expired, please login again")
-                        dataManager.logout()
+                    let isValid = await SessionManager.shared.verifyCookieStatus()
+                    if isValid {
+                        if CredentialHelper.shared.hasCredentials() {
+                            await SessionManager.shared.reLogInIfNeeded()
+                            if !dataManager.isLoggedIn {
+                                dataManager.logout()
+                            }
+                        }
                     }
                 }
         }

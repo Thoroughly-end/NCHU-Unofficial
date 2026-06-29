@@ -58,6 +58,7 @@ struct AllCourses: View {
         }
         .onAppear() {
             initialLoadIfNeeded()
+            isCheckingSession = false
         }
     }
     
@@ -102,6 +103,7 @@ struct AllCourses: View {
     
     private func initialLoadIfNeeded() {
         guard dataManager.courses.isEmpty else { return }
+        isCheckingSession = true
         
         Task {
             await loader.loadAllCourses(dataManager: dataManager)

@@ -11,6 +11,8 @@ import Foundation
 
 class DataManager: ObservableObject {
     @AppStorage("isLoggedIn") var isLoggedIn: Bool = false
+    @Published var isLoggingIn: Bool = false
+    @Published var loginErrorMessage: String? = nil
     @AppStorage("scheduleList") var scheduleList: ScheduleWrapper = ScheduleWrapper(items: [])
     @AppStorage("hasCportalCookies") var hasCportalCookies: Bool = false
     @AppStorage("hasiLearningCookies") var hasiLearningCookies: Bool = false

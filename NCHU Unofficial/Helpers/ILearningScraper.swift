@@ -18,6 +18,9 @@ class ILearningScraper {
         let isValid = await SessionManager.shared.verifyCookieStatus()
         if isValid {
             courses = await courseService.fetchCourses()
+        } else {
+            await SessionManager.shared.reLogInIfNeeded()
+            courses = await courseService.fetchCourses()
         }
         return courses
     }
@@ -27,6 +30,9 @@ class ILearningScraper {
         let isValid = await SessionManager.shared.verifyCookieStatus()
         if isValid {
             results = await announcementService.fetchLatestAnnouncements()
+        } else {
+            await SessionManager.shared.reLogInIfNeeded()
+            results = await announcementService.fetchLatestAnnouncements()
         }
         return results
     }
@@ -35,12 +41,18 @@ class ILearningScraper {
         let isValid = await SessionManager.shared.verifyCookieStatus()
         if isValid {
             await announcementService.fetchAnnouncementContent(for: course)
+        } else {
+            await SessionManager.shared.reLogInIfNeeded()
+            await announcementService.fetchAnnouncementContent(for: course)
         }
     }
     
     func fetchAnnouncementContent(for announcement: AnnouncementData) async {
         let isValid = await SessionManager.shared.verifyCookieStatus()
         if isValid {
+            await announcementService.fetchAnnouncementContent(for: announcement)
+        } else {
+            await SessionManager.shared.reLogInIfNeeded()
             await announcementService.fetchAnnouncementContent(for: announcement)
         }
     }
@@ -49,8 +61,10 @@ class ILearningScraper {
         let isValid = await SessionManager.shared.verifyCookieStatus()
         if isValid {
             return await announcementService.download(for: attachment)
+        } else {
+            await SessionManager.shared.reLogInIfNeeded()
+            return await announcementService.download(for: attachment)
         }
-        return nil
     }
     
     func fetchHomeworkList(course: CourseData) async {

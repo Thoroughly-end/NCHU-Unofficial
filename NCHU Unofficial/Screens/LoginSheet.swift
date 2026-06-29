@@ -40,12 +40,7 @@ struct LoginSheetView: View {
                         CookieManager.shared.saveCookies(cookies)
                         
                         isPreparingCookies = true
-                        
-                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                            let window = windowScene.windows.first {
-                            SharedWebBot.shared.attachToWindow(window)
-                        }
-                        
+
                         Task {
                             await fetchAllSystemCookies()
                             if let courses = await ScheduleScraper.shared.fetchSchedule() {

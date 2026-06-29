@@ -32,14 +32,60 @@ struct SSOWebView: UIViewRepresentable {
             (function() {
                 var retryCount = 0;
                 var maxRetries = 10;
+                var formFilled = false;
+                var cloudflareCheckInterval = null;
                 
+                // 檢查 Cloudflare Turnstile 是否完成
+                function isCloudflareComplete() {
+                    // 方法 1: 檢查 Turnstile 的 response token
+                    var turnstileInput = document.querySelector('input[name="cf-turnstile-response"]');
+                    if (turnstileInput && turnstileInput.value && turnstileInput.value.length > 0) {
+                        console.log('Cloudflare Turnstile token found');
+                        return true;
+                    }
+                    
+                    // 方法 2: 檢查 reCAPTCHA response
+                    var recaptchaResponse = document.querySelector('textarea[name="g-recaptcha-response"]');
+                    if (recaptchaResponse && recaptchaResponse.value && recaptchaResponse.value.length > 0) {
+                        console.log('reCAPTCHA token found');
+                        return true;
+                    }
+                    
+                    // 方法 3: 檢查 Turnstile iframe 的狀態
+                    var turnstileIframe = document.querySelector('iframe[src*="challenges.cloudflare.com"]');
+                    if (turnstileIframe) {
+                        var parentDiv = turnstileIframe.closest('div');
+                        // Turnstile 完成後通常會添加特定的 class 或 attribute
+                        if (parentDiv && (parentDiv.getAttribute('data-state') === 'success' || 
+                            parentDiv.classList.contains('success'))) {
+                            console.log('Cloudflare iframe shows success state');
+                            return true;
+                        }
+                    }
+                    
+                    // 方法 4: 檢查是否沒有 Cloudflare 元素（可能不需要驗證）
+                    var hasCloudflare = document.querySelector('[class*="cloudflare"]') || 
+                                       document.querySelector('[id*="cloudflare"]') ||
+                                       turnstileIframe ||
+                                       turnstileInput;
+                    
+                    if (!hasCloudflare) {
+                        console.log('No Cloudflare challenge detected');
+                        return true; // 沒有 Cloudflare，視為已完成
+                    }
+                    
+                    console.log('Waiting for Cloudflare verification...');
+                    return false;
+                }
+                
+                // 填寫表單
                 function fillForm() {
                     retryCount++;
                     console.log('Attempting to fill form, retry: ' + retryCount);
                     
                     var usernameField = document.getElementById('username') || 
                                        document.querySelector('input[name="username"]') ||
-                                       document.querySelector('input[id*="user"]') ||
+                                       document.querySelector('input[id="user"]') ||
                                        document.querySelector('input[type="text"]');
                     var passwordField = document.getElementById('password') || 
                                        document.querySelector('input[name="password"]') ||
@@ -64,28 +110,10 @@ struct SSOWebView: UIViewRepresentable {
                         passwordField.dispatchEvent(keyupEvent);
                         
                         console.log('Auto-fill completed - Username: ' + usernameField.value);
+                        formFilled = true;
                         
-                        // wait 3 second
-                        setTimeout(function() {
-                            var submitButton = document.querySelector('button[type="submit"]') ||
-                                             document.querySelector('input[type="submit"]') ||
-                                             document.querySelector('button[name="submitBtn"]') ||
-                                             document.querySelector('.btn-submit') ||
-                                             document.querySelector('#submitBtn') ||
-                                             document.querySelector('button');
-                            
-                            if (submitButton) {
-                                console.log('Auto-clicking submit button');
-                                submitButton.click();
-                            } else {
-                                // if can not find button, submit the form
-                                var form = document.querySelector('form');
-                                if (form) {
-                                    console.log('Auto-submitting form');
-                                    form.submit();
-                                }
-                            }
-                        }, 3000);
+                        // 開始監聽 Cloudflare 驗證完成
+                        startCloudflareMonitoring();
                         
                         return true;
                     } else {
@@ -99,6 +127,53 @@ struct SSOWebView: UIViewRepresentable {
                     }
                 }
                 
+                // 監聽 Cloudflare 驗證完成
+                function startCloudflareMonitoring() {
+                    var checkCount = 0;
+                    var maxChecks = 60; // 最多檢查 30 秒 (60 * 500ms)
+                    
+                    console.log('Starting Cloudflare verification monitoring...');
+                    
+                    cloudflareCheckInterval = setInterval(function() {
+                        checkCount++;
+                        
+                        if (isCloudflareComplete()) {
+                            clearInterval(cloudflareCheckInterval);
+                            console.log('Cloudflare verification complete! Submitting form...');
+                            submitForm();
+                        } else if (checkCount >= maxChecks) {
+                            clearInterval(cloudflareCheckInterval);
+                            console.log('Cloudflare verification timeout, attempting to submit anyway...');
+                            submitForm();
+                        }
+                    }, 500); // 每 500ms 檢查一次
+                }
+                
+                // 提交表單
+                function submitForm() {
+                    setTimeout(function() {
+                        var submitButton = document.querySelector('button[type="submit"]') ||
+                                         document.querySelector('input[type="submit"]') ||
+                                         document.querySelector('button[name="submitBtn"]') ||
+                                         document.querySelector('.btn-submit') ||
+                                         document.querySelector('#submitBtn') ||
+                                         document.querySelector('button');
+                        
+                        if (submitButton) {
+                            console.log('Auto-clicking submit button');
+                            submitButton.click();
+                        } else {
+                            // 如果找不到按鈕，直接提交表單
+                            var form = document.querySelector('form');
+                            if (form) {
+                                console.log('Auto-submitting form');
+                                form.submit();
+                            }
+                        }
+                    }, 1000); // 等待 1 秒後提交，確保 token 已經設置
+                }
+                
+                // 開始執行
                 if (!fillForm()) {
                     console.log('Initial fill failed, will retry');
                 }
@@ -138,12 +213,7 @@ struct SSOWebView: UIViewRepresentable {
         }
     }
     
-    static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first {
-            SharedWebBot.shared.attachToWindow(window)
-        }
-    }
+    static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {}
     
     class Coordinator: NSObject, WKNavigationDelegate {
         var parent: SSOWebView
