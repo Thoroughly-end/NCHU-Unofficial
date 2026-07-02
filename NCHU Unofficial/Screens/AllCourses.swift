@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct AllCourses: View {
+    @EnvironmentObject var loginManager: LoginService
     @EnvironmentObject var dataManager: DataManager
     @State private var isCheckingSession: Bool = false
     @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
@@ -27,7 +28,7 @@ struct AllCourses: View {
                     if isCheckingSession {
                         ProgressView("Checking Session")
                     } else {
-                        if !dataManager.isLoggedIn {
+                        if !loginManager.isLoggedIn {
                             Text("Please login")
                         } else {
                             VStack {
@@ -106,7 +107,7 @@ struct AllCourses: View {
         isCheckingSession = true
         
         Task {
-            await loader.loadAllCourses(dataManager: dataManager)
+            await loader.loadAllCourses(loginManager: loginManager, dataManager: dataManager)
         }
     }
 }

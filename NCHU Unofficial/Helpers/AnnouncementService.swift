@@ -119,6 +119,10 @@ class AnnouncementService {
             }
             
             print("Got announcement content：\(announcement.title)")
+            //if let announcementContent = announcement.content {
+            //    print("Got announcement body: \(announcementContent.prefix(20))")
+            //}
+           
             print("Got \(extractedAttachments.count) attachments")
             
             try? await Task.sleep(nanoseconds: 500000000)

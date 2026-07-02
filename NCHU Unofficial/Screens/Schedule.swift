@@ -10,6 +10,7 @@ import SwiftUI
 struct Schedule: View {
     @State private var isCheckingSession: Bool = false
     @EnvironmentObject var dataManager: DataManager
+    @EnvironmentObject var loginManager: LoginService
     @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
     let elementBgColor = Color("ElementBackgroundColor")
     
@@ -126,8 +127,8 @@ struct Schedule: View {
     }
     
     private func initialLoad() {
-        guard dataManager.isLoggedIn else { return }
-        guard dataManager.hasCportalCookies else { return }
+        guard loginManager.isLoggedIn else { return }
+        guard loginManager.hasCportalCookies else { return }
 
         if !dataManager.scheduleList.items.isEmpty {
             return
@@ -145,14 +146,14 @@ struct Schedule: View {
                 }
             } else {
                 print("Session expired, please login again")
-                dataManager.logout()
+                loginManager.logout()
             }
             isCheckingSession = false
         }
     }
 
     private func manualRefresh() {
-        guard dataManager.isLoggedIn && dataManager.hasCportalCookies else { return }
+        guard loginManager.isLoggedIn && loginManager.hasCportalCookies else { return }
 
         isCheckingSession = true
         Task { @MainActor in
@@ -180,7 +181,7 @@ struct Schedule: View {
                 }
             } else {
                 print("Session expired, please login again")
-                dataManager.logout()
+                loginManager.logout()
             }
             isCheckingSession = false
         }

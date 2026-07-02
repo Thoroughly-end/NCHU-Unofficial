@@ -9,22 +9,23 @@ import SwiftUI
 
 struct TestPage: View {
     @EnvironmentObject private var dataManager: DataManager
+    @EnvironmentObject private var loginManager: LoginService
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("isLoggedIn: \(dataManager.isLoggedIn ? "true" : "false")")
+            Text("isLoggedIn: \(loginManager.isLoggedIn ? "true" : "false")")
 
             Button("Set isLoggedIn = false") {
-                dataManager.isLoggedIn = false
+                loginManager.isLoggedIn = false
             }
             .buttonStyle(.borderedProminent)
 
             Button("Logout (keep credential) + reLogIn") {
-                dataManager.isLoggedIn = false
-                dataManager.hasCportalCookies = false
-                dataManager.hasiLearningCookies = false
+                loginManager.isLoggedIn = false
+                loginManager.hasCportalCookies = false
+                loginManager.hasiLearningCookies = false
                 CookieManager.shared.clearCookies()
-                dataManager.isLoggingIn = true
+                loginManager.isLoggingIn = true
             }
             .buttonStyle(.borderedProminent)
         }

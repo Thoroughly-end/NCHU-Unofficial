@@ -16,13 +16,13 @@ class CourseDataLoader: ObservableObject {
     
     private var loadTask: Task<Void, Never>?
     
-    func loadAllCourses(dataManager: DataManager) async -> Bool {
+    func loadAllCourses(loginManager: LoginService, dataManager: DataManager) async -> Bool {
         if isLoading {
             await loadTask?.value
         }
         
-        guard dataManager.isLoggedIn else { return false }
-        guard dataManager.hasiLearningCookies else { return false }
+        guard loginManager.isLoggedIn else { return false }
+        guard loginManager.hasiLearningCookies else { return false }
         
         isLoading = true
         
@@ -32,7 +32,7 @@ class CourseDataLoader: ObservableObject {
             let isValid = await SessionManager.shared.verifyCookieStatus()
             
             guard isValid else {
-                dataManager.logout()
+                loginManager.logout()
                 return
             }
             

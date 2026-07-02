@@ -20,16 +20,16 @@ struct Account: View {
 }
 
 struct UserView: View {
-    @EnvironmentObject var dataManager: DataManager
-    var buttonColor: Color {dataManager.isLoggedIn == true ? Color.red : Color.green}
+    @EnvironmentObject var loginManager: LoginService
+    var buttonColor: Color {loginManager.isLoggedIn == true ? Color.red : Color.green}
     var body: some View {
         VStack(spacing: 20) {
             HStack {
-                if !dataManager.isLoggedIn {
+                if !loginManager.isLoggedIn {
                     Image(systemName: "person.crop.circle")
                         .font(.title)
                     Spacer()
-                    Button(action: {dataManager.showLoginSheet = true}) {
+                    Button(action: {loginManager.showLoginSheet = true}) {
                         Text("Sign In")
                             .font(.title2)
                             .foregroundStyle(Color.primary)
@@ -40,7 +40,7 @@ struct UserView: View {
                     Image(systemName: "person.crop.circle")
                         .font(.title)
                     Spacer()
-                    Button(action: dataManager.logout) {
+                    Button(action: loginManager.logout) {
                         Text("Sign Out")
                             .font(.title2)
                             .foregroundStyle(Color.primary)

@@ -13,6 +13,7 @@ struct LoginSheetView: View {
     
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var dataManager: DataManager
+    @EnvironmentObject var loginManager: LoginService
     @State private var isPreparingCookies: Bool = false
     @State private var isLoadingPage: Bool = true
     @State private var pageErrorMessage: String? = nil
@@ -29,7 +30,7 @@ struct LoginSheetView: View {
             ZStack {
                 SSOWebView(
                     targetURLString: "https://ccidp.nchu.edu.tw/login",
-                    isLoggedIn: $dataManager.isLoggedIn,
+                    isLoggedIn: $loginManager.isLoggedIn,
                     isLoadingPage: $isLoadingPage,
                     pageErrorMessage: $pageErrorMessage,
                     autoFillCredentials: credentials,
@@ -49,7 +50,7 @@ struct LoginSheetView: View {
                             
                         
                             isPreparingCookies = false
-                            dataManager.showLoginSheet = false
+                            loginManager.showLoginSheet = false
                             dismiss()
                         }
                     }
@@ -101,7 +102,7 @@ struct LoginSheetView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Cancel") {
-                        dataManager.showLoginSheet = false
+                        loginManager.showLoginSheet = false
                         dismiss()
                     }
                     .disabled(isPreparingCookies)
@@ -125,7 +126,7 @@ struct LoginSheetView: View {
             }
         }
         
-        dataManager.hasCportalCookies = cportalSuccess
+        loginManager.hasCportalCookies = cportalSuccess
         if !cportalSuccess {
             print("Can not fetch Cportal cookie")
         }
@@ -136,7 +137,7 @@ struct LoginSheetView: View {
             }
         }
         
-        dataManager.hasiLearningCookies = iLearningSuccess
+        loginManager.hasiLearningCookies = iLearningSuccess
         if !iLearningSuccess {
             print("Can not fetch iLearning cookie")
         }

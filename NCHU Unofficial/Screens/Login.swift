@@ -17,7 +17,7 @@ struct Login: View {
     @FocusState private var focusedField: Field?
     @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
     @Environment(\.colorScheme) var colorScheme
-    @EnvironmentObject var dataManager: DataManager
+    @EnvironmentObject var loginManager: LoginService
 
     var isDarkMode: Bool {
         colorScheme == .dark ? true : false
@@ -47,7 +47,7 @@ struct Login: View {
                     HStack {
                         Spacer()
                         HStack {
-                            if dataManager.isLoggingIn {
+                            if loginManager.isLoggingIn {
                                 ProgressView()
                                     .tint(.white)
                                 Text("Logging in...")
@@ -64,13 +64,13 @@ struct Login: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .disabled(username.isEmpty || password.isEmpty || dataManager.isLoggingIn)
+                .disabled(username.isEmpty || password.isEmpty || loginManager.isLoggingIn)
                 Spacer()
             }
             .padding(.horizontal, 50)
             .padding(.vertical, 40)
             
-            if let errorMessage = dataManager.loginErrorMessage {
+            if let errorMessage = loginManager.loginErrorMessage {
                 VStack(spacing: 15) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.red)
@@ -82,7 +82,7 @@ struct Login: View {
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                     Button("Retry") {
-                        dataManager.loginErrorMessage = nil
+                        loginManager.loginErrorMessage = nil
                         login()
                     }
                     .buttonStyle(.borderedProminent)
@@ -122,11 +122,11 @@ struct Login: View {
         
         if saved {
             print("Credentials saved successfully")
-            dataManager.loginErrorMessage = nil
-            dataManager.isLoggingIn = true
+            loginManager.loginErrorMessage = nil
+            loginManager.isLoggingIn = true
         } else {
             print("Failed to save credentials")
-            dataManager.loginErrorMessage = "Failed to save credentials"
+            loginManager.loginErrorMessage = "Failed to save credentials"
         }
     }
 }

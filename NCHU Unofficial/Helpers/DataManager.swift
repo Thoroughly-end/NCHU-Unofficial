@@ -10,22 +10,8 @@ import Combine
 import Foundation
 
 class DataManager: ObservableObject {
-    @AppStorage("isLoggedIn") var isLoggedIn: Bool = false
-    @Published var isLoggingIn: Bool = false
-    @Published var loginErrorMessage: String? = nil
     @AppStorage("scheduleList") var scheduleList: ScheduleWrapper = ScheduleWrapper(items: [])
-    @AppStorage("hasCportalCookies") var hasCportalCookies: Bool = false
-    @AppStorage("hasiLearningCookies") var hasiLearningCookies: Bool = false
-    @Published var showLoginSheet: Bool = false
     @Published var courses: [CourseData] = []
-    
-    func logout() {
-        isLoggedIn = false
-        hasCportalCookies = false
-        hasiLearningCookies = false
-        CookieManager.shared.clearCookies()
-        CredentialHelper.shared.clearCredentials()
-    }
 }
 
 struct ScheduleWrapper: RawRepresentable {

@@ -10,6 +10,7 @@ import SwiftUI
 @main
 struct NCHU_UnofficialApp: App {
     @StateObject private var dataManager = DataManager()
+    @StateObject private var loginManager = LoginService()
     
     init() {
         CookieManager.shared.loadCookies()
@@ -19,6 +20,7 @@ struct NCHU_UnofficialApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(dataManager)
+                .environmentObject(loginManager)
                 .task { @MainActor in
                     print("preloading WebBot...")
                     async let _ = SharedWebBot.shared
@@ -26,8 +28,8 @@ struct NCHU_UnofficialApp: App {
                     if isValid {
                         if CredentialHelper.shared.hasCredentials() {
                             await SessionManager.shared.reLogInIfNeeded()
-                            if !dataManager.isLoggedIn {
-                                dataManager.logout()
+                            if !loginManager.isLoggedIn {
+                                loginManager.logout()
                             }
                         }
                     }

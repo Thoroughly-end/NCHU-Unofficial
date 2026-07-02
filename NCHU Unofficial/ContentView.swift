@@ -24,18 +24,19 @@ struct SharedWebBotHost: UIViewRepresentable {
 /// while `dataManager.isLoggingIn` is true, pulling the saved account from
 /// `CredentialHelper`, then refreshes the Cportal / iLearning cookies on success.
 struct HiddenWebView: View {
+    @EnvironmentObject var loginManager: LoginService
     @EnvironmentObject var dataManager: DataManager
     @State private var isLoadingPage: Bool = true
 
     var body: some View {
         Group {
-            if dataManager.isLoggingIn,
+            if loginManager.isLoggingIn,
                let credentials = CredentialHelper.shared.loadCredentials() {
                 SSOWebView(
                     targetURLString: "https://ccidp.nchu.edu.tw/login",
-                    isLoggedIn: $dataManager.isLoggedIn,
+                    isLoggedIn: $loginManager.isLoggedIn,
                     isLoadingPage: $isLoadingPage,
-                    pageErrorMessage: $dataManager.loginErrorMessage,
+                    pageErrorMessage: $loginManager.loginErrorMessage,
                     autoFillCredentials: credentials,
                     onLoginSuccess: { cookies in
                         handleLoginSuccess(cookies)
@@ -58,8 +59,8 @@ struct HiddenWebView: View {
             if let schedule = await ScheduleScraper.shared.fetchSchedule() {
                 dataManager.scheduleList.items = schedule
             }
-            dataManager.isLoggingIn = false
-            dataManager.showLoginSheet = false
+            loginManager.isLoggingIn = false
+            loginManager.showLoginSheet = false
         }
     }
 
@@ -69,7 +70,7 @@ struct HiddenWebView: View {
                 continuation.resume(returning: success)
             }
         }
-        dataManager.hasCportalCookies = cportalSuccess
+        loginManager.hasCportalCookies = cportalSuccess
         if !cportalSuccess {
             print("Can not fetch Cportal cookie")
         }
@@ -79,7 +80,7 @@ struct HiddenWebView: View {
                 continuation.resume(returning: success)
             }
         }
-        dataManager.hasiLearningCookies = iLearningSuccess
+        loginManager.hasiLearningCookies = iLearningSuccess
         if !iLearningSuccess {
             print("Can not fetch iLearning cookie")
         }
@@ -105,6 +106,7 @@ enum APPTab: String {
 struct ContentView: View {
     @State private var activeTab: APPTab = .schedule
     @EnvironmentObject var dataManager: DataManager
+    @EnvironmentObject var loginManager: LoginService
     
     var body: some View {
         TabView(selection: $activeTab) {
@@ -134,11 +136,11 @@ struct ContentView: View {
             .allowsHitTesting(false)
         }
         .onAppear() {
-            if dataManager.isLoggedIn == false {
-                dataManager.showLoginSheet = true
+            if loginManager.isLoggedIn == false {
+                loginManager.showLoginSheet = true
             }
         }
-        .sheet(isPresented: $dataManager.showLoginSheet) {
+        .sheet(isPresented: $loginManager.showLoginSheet) {
             NavigationView {
                 Login()
                     .navigationTitle("Login")
@@ -146,7 +148,7 @@ struct ContentView: View {
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
                             Button("Cancel") {
-                                dataManager.showLoginSheet = false
+                                loginManager.showLoginSheet = false
                             }
                         }
                     }
@@ -158,5 +160,6 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environmentObject(DataManager())
+        .environmentObject(LoginService())
 }
 
