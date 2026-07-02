@@ -25,9 +25,9 @@ class LoginService: ObservableObject {
         CredentialHelper.shared.clearCredentials()
     }
     
-    func relogin() {
-        
-    }
+    //func relogin() {
+    //
+    //}
     
     func login() async {
         isLoggedIn = false
