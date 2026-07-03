@@ -130,7 +130,7 @@ struct SSOWebView: UIViewRepresentable {
                 // 監聽 Cloudflare 驗證完成
                 function startCloudflareMonitoring() {
                     var checkCount = 0;
-                    var maxChecks = 60; // 最多檢查 30 秒 (60 * 500ms)
+                    var maxChecks = 30; // 最多檢查 15 秒 (30 * 500ms)
                     
                     console.log('Starting Cloudflare verification monitoring...');
                     
@@ -246,7 +246,7 @@ struct SSOWebView: UIViewRepresentable {
             print("Loaded：\(urlString)")
             
             if urlString.contains("https://cportal.nchu.edu.tw/cas_login/") {
-                print("Login Successfully")
+                print("Login Successfully: SSO WebView")
                 
                 WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
                     let cookieNames = cookies.map { $0.name }

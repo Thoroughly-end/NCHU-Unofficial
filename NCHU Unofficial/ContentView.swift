@@ -27,11 +27,12 @@ struct HiddenWebView: View {
     @EnvironmentObject var loginManager: LoginService
     @EnvironmentObject var dataManager: DataManager
     @State private var isLoadingPage: Bool = true
+    @State private var credentials: (String, String)?
+    @State private var shouldShowWebView: Bool = false
 
     var body: some View {
         Group {
-            if loginManager.isLoggingIn,
-               let credentials = CredentialHelper.shared.loadCredentials() {
+            if shouldShowWebView, let credentials = credentials {
                 SSOWebView(
                     targetURLString: "https://ccidp.nchu.edu.tw/login",
                     isLoggedIn: $loginManager.isLoggedIn,
@@ -44,6 +45,15 @@ struct HiddenWebView: View {
                 )
             }
         }
+        .onChange(of: loginManager.isLoggingIn) { oldValue, newValue in
+            if newValue && credentials == nil {
+                credentials = CredentialHelper.shared.loadCredentials()
+                shouldShowWebView = credentials != nil
+            } else if !newValue {
+                credentials = nil
+                shouldShowWebView = false
+            }
+        }
     }
 
     private func handleLoginSuccess(_ cookies: [HTTPCookie]) {
@@ -54,13 +64,12 @@ struct HiddenWebView: View {
         }
         CookieManager.shared.saveCookies(cookies)
 
-        Task {
+        Task { @MainActor in
             await fetchAllSystemCookies()
             if let schedule = await ScheduleScraper.shared.fetchSchedule() {
                 dataManager.scheduleList.items = schedule
             }
-            loginManager.isLoggingIn = false
-            loginManager.showLoginSheet = false
+            loginManager.completeLogin(success: true)
         }
     }
 
@@ -136,8 +145,15 @@ struct ContentView: View {
             .allowsHitTesting(false)
         }
         .onAppear() {
-            if loginManager.isLoggedIn == false {
-                loginManager.showLoginSheet = true
+            Task {
+                if !loginManager.isLoggedIn {
+                    let success = await loginManager.login()
+                    if success {
+                        print("Login success: Homepage")
+                    } else {
+                        print("Login failed: Homepage")
+                    }
+                }
             }
         }
         .sheet(isPresented: $loginManager.showLoginSheet) {
@@ -148,7 +164,7 @@ struct ContentView: View {
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
                             Button("Cancel") {
-                                loginManager.showLoginSheet = false
+                                loginManager.cancelLogin()
                             }
                         }
                     }

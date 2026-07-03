@@ -38,7 +38,7 @@ class CredentialHelper {
             kSecAttrService as String: service,
             kSecAttrAccount as String: usernameKey,
             kSecValueData as String: username.data(using: .utf8)!,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
         
         let status = SecItemAdd(query as CFDictionary, nil)
@@ -53,7 +53,7 @@ class CredentialHelper {
             kSecAttrService as String: service,
             kSecAttrAccount as String: passwordKey,
             kSecValueData as String: password.data(using: .utf8)!,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
         
         let status = SecItemAdd(query as CFDictionary, nil)

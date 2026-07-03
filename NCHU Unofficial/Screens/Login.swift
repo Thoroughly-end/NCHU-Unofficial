@@ -122,8 +122,7 @@ struct Login: View {
         
         if saved {
             print("Credentials saved successfully")
-            loginManager.loginErrorMessage = nil
-            loginManager.isLoggingIn = true
+            loginManager.startCAS()
         } else {
             print("Failed to save credentials")
             loginManager.loginErrorMessage = "Failed to save credentials"
@@ -173,4 +172,5 @@ private struct FloatingLabelField: View {
 #Preview {
     Login()
         .environmentObject(DataManager())
+        .environmentObject(LoginService())
 }

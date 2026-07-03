@@ -29,7 +29,16 @@ struct UserView: View {
                     Image(systemName: "person.crop.circle")
                         .font(.title)
                     Spacer()
-                    Button(action: {loginManager.showLoginSheet = true}) {
+                    Button(action: {
+                        Task { @MainActor in
+                            let success = await loginManager.login()
+                            if success {
+                                print("Login success: Account page")
+                            } else {
+                                print("Login failed: Account page")
+                            }
+                        }
+                    }) {
                         Text("Sign In")
                             .font(.title2)
                             .foregroundStyle(Color.primary)
@@ -61,5 +70,5 @@ struct UserView: View {
 
 #Preview {
     Account()
-        .environmentObject(DataManager())
+        .environmentObject(LoginService())
 }
