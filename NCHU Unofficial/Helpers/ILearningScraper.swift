@@ -19,7 +19,6 @@ class ILearningScraper {
         if isValid {
             courses = await courseService.fetchCourses()
         } else {
-            await SessionManager.shared.reLogInIfNeeded()
             courses = await courseService.fetchCourses()
         }
         return courses
@@ -31,7 +30,6 @@ class ILearningScraper {
         if isValid {
             results = await announcementService.fetchLatestAnnouncements()
         } else {
-            await SessionManager.shared.reLogInIfNeeded()
             results = await announcementService.fetchLatestAnnouncements()
         }
         return results
@@ -42,7 +40,6 @@ class ILearningScraper {
         if isValid {
             await announcementService.fetchAnnouncementContent(for: course)
         } else {
-            await SessionManager.shared.reLogInIfNeeded()
             await announcementService.fetchAnnouncementContent(for: course)
         }
     }
@@ -52,7 +49,6 @@ class ILearningScraper {
         if isValid {
             await announcementService.fetchAnnouncementContent(for: announcement)
         } else {
-            await SessionManager.shared.reLogInIfNeeded()
             await announcementService.fetchAnnouncementContent(for: announcement)
         }
     }
@@ -62,7 +58,6 @@ class ILearningScraper {
         if isValid {
             return await announcementService.download(for: attachment)
         } else {
-            await SessionManager.shared.reLogInIfNeeded()
             return await announcementService.download(for: attachment)
         }
     }

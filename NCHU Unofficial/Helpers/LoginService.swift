@@ -27,15 +27,7 @@ class LoginService: ObservableObject {
         hasiLearningCookies = false
         CookieManager.shared.clearCookies()
         CredentialHelper.shared.clearCredentials()
-    }
-    
-    func relogin() {
-        // TODO: Implement relogin logic
-        if CredentialHelper.shared.hasCredentials() {
-            
-        } else {
-            
-        }
+        SessionManager.shared.invalidateCache()
     }
     
     func startCAS() {
@@ -79,6 +71,14 @@ class LoginService: ObservableObject {
     func cancelLogin() {
         isLoggingIn = false
         showLoginSheet = false
+        isLoggedIn = false
+        
+        loginContinuation?.resume(returning: false)
+        loginContinuation = nil
+    }
+    
+    func stopLogin() {
+        isLoggingIn = false
         isLoggedIn = false
         
         loginContinuation?.resume(returning: false)

@@ -30,6 +30,7 @@ struct HiddenWebView: View {
     @State private var credentials: (String, String)?
     @State private var shouldShowWebView: Bool = false
     @Binding var needsPasswordChange: Bool
+    @Binding var invalidCredentials: Bool
 
     var body: some View {
         Group {
@@ -40,6 +41,7 @@ struct HiddenWebView: View {
                     isLoadingPage: $isLoadingPage,
                     pageErrorMessage: $loginManager.loginErrorMessage,
                     needsPasswordChange: $needsPasswordChange,
+                    invalidCredential: $invalidCredentials,
                     autoFillCredentials: credentials,
                     onLoginSuccess: { cookies in
                         handleLoginSuccess(cookies)
@@ -50,7 +52,7 @@ struct HiddenWebView: View {
         .onChange(of: loginManager.isLoggingIn) { oldValue, newValue in
             if newValue && credentials == nil {
                 credentials = CredentialHelper.shared.loadCredentials()
-                shouldShowWebView = credentials != nil
+                shouldShowWebView = true
             } else if !newValue {
                 credentials = nil
                 shouldShowWebView = false
@@ -71,6 +73,10 @@ struct HiddenWebView: View {
             if let schedule = await ScheduleScraper.shared.fetchSchedule() {
                 dataManager.scheduleList.items = schedule
             }
+            
+            // Set session cache as valid after successful login
+            SessionManager.shared.markSessionAsValid()
+            
             loginManager.completeLogin(success: true)
         }
     }
@@ -119,6 +125,7 @@ struct ContentView: View {
     @EnvironmentObject var dataManager: DataManager
     @EnvironmentObject var loginManager: LoginService
     @State var showAlert: Bool = false
+    @State var showInvalidCredentialAlert: Bool = false
     
     var body: some View {
         TabView(selection: $activeTab) {
@@ -141,7 +148,7 @@ struct ContentView: View {
         .background {
             ZStack {
                 SharedWebBotHost()
-                HiddenWebView(needsPasswordChange: $showAlert)
+                HiddenWebView(needsPasswordChange: $showAlert, invalidCredentials: $showInvalidCredentialAlert)
             }
             .frame(width: 1, height: 1)
             .opacity(0)
@@ -161,7 +168,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $loginManager.showLoginSheet) {
             NavigationView {
-                Login(showAlert: $showAlert)
+                Login(showAlert: $showAlert, invalidCredentialAlert: $showInvalidCredentialAlert)
                     .navigationTitle("Login")
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {

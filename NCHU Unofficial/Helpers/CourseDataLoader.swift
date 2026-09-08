@@ -32,7 +32,10 @@ class CourseDataLoader: ObservableObject {
             let isValid = await SessionManager.shared.verifyCookieStatus()
             
             guard isValid else {
-                loginManager.logout()
+                print("Session invalid, need to re-login")
+                // Clear cookies but don't logout immediately
+                CookieManager.shared.clearCookies()
+                loginManager.isLoggedIn = false
                 return
             }
             

@@ -14,6 +14,8 @@ struct SSOWebView: UIViewRepresentable {
     @Binding var isLoadingPage: Bool
     @Binding var pageErrorMessage: String?
     @Binding var needsPasswordChange: Bool
+    @Binding var invalidCredential: Bool
+    
     
     var autoFillCredentials: (username: String, password: String)? = nil
     
@@ -299,7 +301,8 @@ struct SSOWebView: UIViewRepresentable {
                         webView.stopLoading()
                         
                         DispatchQueue.main.async {
-                            self.parent.pageErrorMessage = "Invalid Credentials"
+                            //self.parent.pageErrorMessage = "Invalid Credentials"
+                            self.parent.invalidCredential = true
                             self.parent.isLoggedIn = false
                             self.parent.isLoadingPage = false
                         }
@@ -321,7 +324,7 @@ struct SSOWebView: UIViewRepresentable {
         
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
             DispatchQueue.main.async {
-                if self.parent.pageErrorMessage == nil {
+                if self.parent.pageErrorMessage == nil || self.parent.invalidCredential == false {
                     self.parent.isLoadingPage = true
                 }
             }

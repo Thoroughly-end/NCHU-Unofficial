@@ -19,6 +19,7 @@ struct Login: View {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var loginManager: LoginService
     @Binding var showAlert: Bool
+    @Binding var invalidCredentialAlert: Bool
 
     var isDarkMode: Bool {
         colorScheme == .dark ? true : false
@@ -102,6 +103,15 @@ struct Login: View {
         } message: {
             Text("Passwword change notification detected. It is recommended to change your password.")
         }
+        
+        .alert("Wrong Account or Password", isPresented: $invalidCredentialAlert) {
+            Button("OK", role: .cancel) {
+                invalidCredentialAlert = false
+                loginManager.stopLogin()
+            }
+        } message: {
+            Text("Wrong account or password. Please try again.")
+        }
     }
     
     
@@ -183,7 +193,7 @@ private struct FloatingLabelField: View {
 }
 
 #Preview {
-    Login(showAlert: .constant(false))
+    Login(showAlert: .constant(false), invalidCredentialAlert: .constant(false))
         .environmentObject(DataManager())
         .environmentObject(LoginService())
 }

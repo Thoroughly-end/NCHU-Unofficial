@@ -34,14 +34,13 @@ class SessionManager {
             if let responseURL = httpResponse.url?.absoluteString,
                responseURL.contains("https://ccidp.nchu.edu.tw/login") {
                 print("Redirected to SSO page. Session expired")
-                CookieManager.shared.clearCookies()
+                // Don't clear cookies immediately - only mark as invalid
                 isValid = false
             } else if httpResponse.statusCode == 200 {
                 print("Session valid")
                 isValid = true
             } else {
                 print("Server rejected: \(httpResponse.statusCode)")
-                CookieManager.shared.clearCookies()
                 isValid = false
             }
             
@@ -54,13 +53,17 @@ class SessionManager {
             return false
         }
     }
-    
-    func reLogInIfNeeded() async {
-        
-    }
 
     func invalidateCache() {
         cachedValidationResult = nil
         cachedValidationTime = nil
+    }
+    
+    /// Marks the session as valid without making a network request.
+    /// Call this after successful login to avoid unnecessary validation.
+    func markSessionAsValid() {
+        cachedValidationResult = true
+        cachedValidationTime = Date()
+        print("Session marked as valid")
     }
 }
