@@ -25,7 +25,7 @@ struct NCHU_UnofficialApp: App {
                     print("preloading WebBot...")
                     async let _ = SharedWebBot.shared
                     let isValid = await SessionManager.shared.verifyCookieStatus()
-                    if isValid {
+                    if !isValid {
                         if CredentialHelper.shared.hasCredentials() {
                             await SessionManager.shared.reLogInIfNeeded()
                             if !loginManager.isLoggedIn {

@@ -29,6 +29,7 @@ struct HiddenWebView: View {
     @State private var isLoadingPage: Bool = true
     @State private var credentials: (String, String)?
     @State private var shouldShowWebView: Bool = false
+    @Binding var needsPasswordChange: Bool
 
     var body: some View {
         Group {
@@ -38,6 +39,7 @@ struct HiddenWebView: View {
                     isLoggedIn: $loginManager.isLoggedIn,
                     isLoadingPage: $isLoadingPage,
                     pageErrorMessage: $loginManager.loginErrorMessage,
+                    needsPasswordChange: $needsPasswordChange,
                     autoFillCredentials: credentials,
                     onLoginSuccess: { cookies in
                         handleLoginSuccess(cookies)
@@ -116,6 +118,7 @@ struct ContentView: View {
     @State private var activeTab: APPTab = .schedule
     @EnvironmentObject var dataManager: DataManager
     @EnvironmentObject var loginManager: LoginService
+    @State var showAlert: Bool = false
     
     var body: some View {
         TabView(selection: $activeTab) {
@@ -138,7 +141,7 @@ struct ContentView: View {
         .background {
             ZStack {
                 SharedWebBotHost()
-                HiddenWebView()
+                HiddenWebView(needsPasswordChange: $showAlert)
             }
             .frame(width: 1, height: 1)
             .opacity(0)
@@ -158,7 +161,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $loginManager.showLoginSheet) {
             NavigationView {
-                Login()
+                Login(showAlert: $showAlert)
                     .navigationTitle("Login")
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {

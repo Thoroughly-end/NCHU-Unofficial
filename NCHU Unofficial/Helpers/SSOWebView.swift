@@ -13,9 +13,9 @@ struct SSOWebView: UIViewRepresentable {
     @Binding var isLoggedIn: Bool
     @Binding var isLoadingPage: Bool
     @Binding var pageErrorMessage: String?
+    @Binding var needsPasswordChange: Bool
     
     var autoFillCredentials: (username: String, password: String)? = nil
-    var shouldSaveCredentials: Bool = false
     
     var onLoginSuccess: ([HTTPCookie]) -> Void
     
@@ -222,6 +222,95 @@ struct SSOWebView: UIViewRepresentable {
             self.parent = parent
         }
         
+        func passChangPwdAlert(webView: WKWebView, completion: ((Bool) -> Void)? = nil) {
+            let script = """
+            (function() {
+                var pageTitle = document.title || '';
+                
+                var needsPasswordChanging = pageTitle.includes('CAS - Central Authentication Service 請注意下列警示項目');
+                var continueBtn = document.querySelector('button[name="continue"]');
+                
+                if (needsPasswordChanging && continueBtn) {
+                    continueBtn.click();
+                    return { needsPasswordChange: true, clicked: true };
+                }
+                
+                return { needsPasswordChange: needsPasswordChanging, clicked: false };
+            })();
+            """
+            
+            webView.evaluateJavaScript(script) { [weak self] result, error in
+                guard let self = self else { return }
+                
+                if let error = error {
+                    print("❌ Error when checking password change alert: \(error.localizedDescription)")
+                    completion?(false)
+                    return
+                }
+                
+                if let result = result as? [String: Any] {
+                    if let needsPasswordChange = result["needsPasswordChange"] as? Bool,
+                       needsPasswordChange {
+                        print("⚠️ Password change alert detected")
+                        
+                        if let clicked = result["clicked"] as? Bool, clicked {
+                            print("✅ Clicked continue button")
+                        }
+                        
+                        DispatchQueue.main.async {
+                            self.parent.needsPasswordChange = true
+                        }
+                        
+                        completion?(true)
+                        return
+                    }
+                }
+                
+                completion?(false)
+            }
+        }
+        
+        func isValidCredential(webView: WKWebView, completion: ((Bool) -> Void)? = nil) {
+            let script = """
+            (function() {
+                var hasWrongCredentialMsg = document.querySelector('div#loginErrorsPanel');
+                
+                if (hasWrongCredentialMsg) {
+                    return false;
+                }
+                
+                return true;
+            })();
+            """
+            
+            webView.evaluateJavaScript(script) { [weak self] result, error in
+                guard let self = self else { return }
+                
+                if let error = error {
+                    print("❌ Error when checking validation of credential: \(error.localizedDescription)")
+                    completion?(true)
+                    return
+                }
+                
+                if let isValid = result as? Bool {
+                    if !isValid {
+                        print("❌ Invalid Credentials")
+                        
+                        webView.stopLoading()
+                        
+                        DispatchQueue.main.async {
+                            self.parent.pageErrorMessage = "Invalid Credentials"
+                            self.parent.isLoggedIn = false
+                            self.parent.isLoadingPage = false
+                        }
+                    }
+                    completion?(isValid)
+                    return
+                }
+                
+                completion?(true)
+            }
+        }
         
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
             if let url = navigationAction.request.url {
@@ -232,33 +321,48 @@ struct SSOWebView: UIViewRepresentable {
         
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
             DispatchQueue.main.async {
-                self.parent.isLoadingPage = true
-                self.parent.pageErrorMessage = nil
+                if self.parent.pageErrorMessage == nil {
+                    self.parent.isLoadingPage = true
+                }
             }
         }
         
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             DispatchQueue.main.async {
-                print("reached")
+                print("✅ Page reached")
                 self.parent.isLoadingPage = false
             }
-            guard let urlString = webView.url?.absoluteString else { return }
-            print("Loaded：\(urlString)")
             
-            if urlString.contains("https://cportal.nchu.edu.tw/cas_login/") {
-                print("Login Successfully: SSO WebView")
+            guard let urlString = webView.url?.absoluteString else { return }
+            print("📍 Loaded URL: \(urlString)")
+            
+            isValidCredential(webView: webView) { isValid in
+                if !isValid {
+                    print("🚫 Invalid credentials - stopping login process")
+                    return
+                }
                 
-                WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
-                    let cookieNames = cookies.map { $0.name }
-                    print("Cookies：\(cookieNames)")
+                self.passChangPwdAlert(webView: webView) { needsPasswordChange in
+                    if needsPasswordChange {
+                        print("🔒 Password change alert handled")
+                    }
                     
-                    let hasSession = cookies.contains(where: { $0.name.contains("SESSION") })
-                    
-                    DispatchQueue.main.async {
-                        if hasSession {
-                            print("Get SESSION Successfully")
-                            self.parent.isLoggedIn = true
-                            self.parent.onLoginSuccess(cookies)
+                    if urlString.contains("https://cportal.nchu.edu.tw/cas_login/") {
+                        print("✅ Login Successfully: SSO WebView")
+                        
+                        WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
+                            let cookieNames = cookies.map { $0.name }
+                            print("🍪 Cookies: \(cookieNames)")
+                            
+                            let hasSession = cookies.contains(where: { $0.name.contains("SESSION") })
+                            
+                            DispatchQueue.main.async {
+                                if hasSession {
+                                    print("✅ Get SESSION Successfully")
+                                    self.parent.isLoggedIn = true
+                                    self.parent.onLoginSuccess(cookies)
+                                }
+                            }
                         }
                     }
                 }

@@ -193,4 +193,5 @@ struct Schedule: View {
 #Preview {
     Schedule()
         .environmentObject(DataManager())
+        .environmentObject(LoginService())
 }

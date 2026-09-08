@@ -18,6 +18,7 @@ struct Login: View {
     @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var loginManager: LoginService
+    @Binding var showAlert: Bool
 
     var isDarkMode: Bool {
         colorScheme == .dark ? true : false
@@ -91,8 +92,18 @@ struct Login: View {
                 .background(.ultraThinMaterial)
                 .cornerRadius(20)
             }
+            
+            
+        }
+        .alert("Password Change Required", isPresented: $showAlert) {
+            Button("OK", role: .cancel) {
+                showAlert = false
+            }
+        } message: {
+            Text("Passwword change notification detected. It is recommended to change your password.")
         }
     }
+    
     
     private var inputArea: some View {
         VStack(spacing: 0) {
@@ -128,6 +139,8 @@ struct Login: View {
             loginManager.loginErrorMessage = "Failed to save credentials"
         }
     }
+    
+    
 }
 
 private struct FloatingLabelField: View {
@@ -170,7 +183,7 @@ private struct FloatingLabelField: View {
 }
 
 #Preview {
-    Login()
+    Login(showAlert: .constant(false))
         .environmentObject(DataManager())
         .environmentObject(LoginService())
 }
