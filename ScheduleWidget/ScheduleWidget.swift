@@ -168,8 +168,8 @@ struct ScheduleWidget: Widget {
                 .containerBackground(.ultraThinMaterial.tertiary, for: .widget)
         }
         .supportedFamilies([.systemMedium])
-        .configurationDisplayName("課表")
-        .description("顯示目前課表與下一節課")
+        .configurationDisplayName("Schedule")
+        .description("Show your current and next class")
     }
 }
 
