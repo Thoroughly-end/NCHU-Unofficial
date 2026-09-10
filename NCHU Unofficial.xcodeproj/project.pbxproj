@@ -47,6 +47,7 @@
 		9F7BE49D30517A5000EC6C9B /* ScheduleWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScheduleWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		9F7BE49F30517A5000EC6C9B /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		9F7BE4A130517A5000EC6C9B /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		9F7D919730534D0100B16159 /* ScheduleWidgetExtensionDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ScheduleWidgetExtensionDebug.entitlements; sourceTree = "<group>"; };
 		9FE2488A2F68719500DF4A5F /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
 		9FE411022F54A19B00F1CA49 /* NCHU-Unofficial-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "NCHU-Unofficial-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -59,11 +60,23 @@
 			);
 			target = 9F7BE49C30517A5000EC6C9B /* ScheduleWidgetExtension */;
 		};
+		9F7BE4BA305181D000EC6C9B /* Exceptions for "NCHU Unofficial" folder in "ScheduleWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Helpers/Models/ScheduleData.swift,
+				Helpers/Models/ScheduleLayout.swift,
+				Helpers/Models/SchedulePeriod.swift,
+			);
+			target = 9F7BE49C30517A5000EC6C9B /* ScheduleWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9F59B8982F51FADD00A7740E /* NCHU Unofficial */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9F7BE4BA305181D000EC6C9B /* Exceptions for "NCHU Unofficial" folder in "ScheduleWidgetExtension" target */,
+			);
 			path = "NCHU Unofficial";
 			sourceTree = "<group>";
 		};
@@ -101,6 +114,7 @@
 		9F59B88D2F51FADD00A7740E = {
 			isa = PBXGroup;
 			children = (
+				9F7D919730534D0100B16159 /* ScheduleWidgetExtensionDebug.entitlements */,
 				9FE2488A2F68719500DF4A5F /* index.html */,
 				9F3986E72F632C4C004E2A91 /* privacyPolicy.md */,
 				9F04C93C2F5566600096A17D /* readme.md */,
@@ -393,6 +407,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = "NCHU Unofficial/NCHU UnofficialDebug.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -500,22 +515,23 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = ScheduleWidgetExtensionDebug.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = TGV4G9UYJX;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScheduleWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ScheduleWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.allen.NCHU-Unofficial.ScheduleWidget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -537,19 +553,19 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = TGV4G9UYJX;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScheduleWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ScheduleWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.allen.NCHU-Unofficial.ScheduleWidget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;

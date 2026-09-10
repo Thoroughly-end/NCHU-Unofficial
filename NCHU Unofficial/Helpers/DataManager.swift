@@ -10,7 +10,7 @@ import Combine
 import Foundation
 
 class DataManager: ObservableObject {
-    @AppStorage("scheduleList") var scheduleList: ScheduleWrapper = ScheduleWrapper(items: [])
+    @AppStorage("scheduleList", store: UserDefaults(suiteName: "group.com.allen.NCHU-Unofficial")) var scheduleList: ScheduleWrapper = ScheduleWrapper(items: [])
     @Published var courses: [CourseData] = []
 }
 
