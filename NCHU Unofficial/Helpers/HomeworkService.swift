@@ -41,10 +41,12 @@ class HomeworkService {
                 var detailUrl = ""
                 var name = ""
                 var id = 0
-                var isCompleted: Bool = false
                 var score: Int? = nil
                 var dueDate: Date = Date()
                 var startDate: Date = Date()
+                // Completion is marked by the "item-pass" check-circle icon,
+                // which is not confined to a fixed cell, so look across the whole row.
+                let isCompleted = try !row.select("span.fa-check.fs-text-success").isEmpty()
                 for (i, cell) in cells.enumerated() {
                     if i == 1 {
                         guard let linkElement = try cell.select("a").first() else { continue }
@@ -58,8 +60,7 @@ class HomeworkService {
                     } else if i == 4 {
                         let dueStr = try cell.select("div.text-overflow").text()
                         dueDate = parseMessyDate(dueStr)
-                    } else if i == 5 {
-                        isCompleted = try !cell.select("span.fa-check.fs-text-success").isEmpty()
+
                     } else if i == 6 {
                         let scoreStr = try cell.select("div.text-overflow").text()
                         if scoreStr == "尚未完成" {
