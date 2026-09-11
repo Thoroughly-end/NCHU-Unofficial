@@ -177,5 +177,5 @@ struct ScheduleWidget: Widget {
     ScheduleWidget()
 } timeline: {
     ClassEntry(date: .now, current: nil, next: nil)
-    ClassEntry(date: .now, current: Period(day: 1, range: 3...4, info: ScheduleData(text: "計算機組織 (3259) 蘇淮安AT242")), next: nil)
+    ClassEntry(date: .now, current: Period(day: 1, range: 3...4, info: ScheduleData(text: "計算機組織 (3259) 蘇淮安AT242")), next: Period(day: 1, range: 5...6, info: ScheduleData(text: "資訊安全導論 (1234) 林詠章SC112")))
 }
