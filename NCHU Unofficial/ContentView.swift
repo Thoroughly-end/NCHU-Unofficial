@@ -71,7 +71,7 @@ struct HiddenWebView: View {
         Task { @MainActor in
             await fetchAllSystemCookies()
             if let schedule = await ScheduleScraper.shared.fetchSchedule() {
-                dataManager.scheduleList.items = schedule
+                dataManager.updateSchedule(schedule)
             }
             
             // Set session cache as valid after successful login

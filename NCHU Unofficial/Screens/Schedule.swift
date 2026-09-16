@@ -140,9 +140,9 @@ struct Schedule: View {
             if isValid {
                 print("Session valid, Start to fetch schedule")
                 if let schedule = await ScheduleScraper.shared.fetchSchedule() {
-                    dataManager.scheduleList.items = schedule
+                    dataManager.updateSchedule(schedule)
                 } else {
-                    dataManager.scheduleList.items = []
+                    dataManager.updateSchedule([])
                 }
             } else {
                 print("Session expired, please login again")
@@ -160,7 +160,7 @@ struct Schedule: View {
             let isValid = await SessionManager.shared.verifyCookieStatus()
             if isValid {
                 if let newSchedule = await ScheduleScraper.shared.fetchSchedule() {
-                    dataManager.scheduleList.items = newSchedule
+                    dataManager.updateSchedule(newSchedule)
                     let period: SchedulePeriod = .init(schedule: newSchedule)
                     for p in period.periods {
                         print(p.day)
@@ -176,7 +176,7 @@ struct Schedule: View {
                     }
                     print("Manual refresh schedule successfully")
                 } else {
-                    dataManager.scheduleList.items = []
+                    dataManager.updateSchedule([])
                     print("Failure in manual refresh")
                 }
             } else {

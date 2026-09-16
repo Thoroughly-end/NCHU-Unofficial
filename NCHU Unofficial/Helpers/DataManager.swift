@@ -8,10 +8,17 @@
 import SwiftUI
 import Combine
 import Foundation
+import WidgetKit
 
 class DataManager: ObservableObject {
     @AppStorage("scheduleList", store: UserDefaults(suiteName: "group.com.allen.NCHU-Unofficial")) var scheduleList: ScheduleWrapper = ScheduleWrapper(items: [])
     @Published var courses: [CourseData] = []
+
+    /// Persists the schedule to the shared App Group store and refreshes the widget timeline.
+    func updateSchedule(_ items: [ScheduleData]) {
+        scheduleList.items = items
+        WidgetCenter.shared.reloadAllTimelines()
+    }
 }
 
 struct ScheduleWrapper: RawRepresentable {
