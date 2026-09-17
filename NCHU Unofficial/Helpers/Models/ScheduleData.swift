@@ -36,7 +36,7 @@ struct ScheduleData: Codable, Equatable {
     }
     
     private func parseTeacherAndRoom(_ input: String) -> (teacher: String?, room: String?) {
-        let regex = /^(.+?)([A-Za-z]{1,2}\d{3})$/
+        let regex = /^(.+?)([A-Za-z]{1,2}\d{3,4})$/
 
         if let match = input.wholeMatch(of: regex) {
             return (String(match.output.1), String(match.output.2))

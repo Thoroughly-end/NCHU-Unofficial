@@ -18,7 +18,23 @@ struct Schedule: View {
         guard !dataManager.scheduleList.items.isEmpty else { return [] }
         return SchedulePeriod(schedule: dataManager.scheduleList.items).periods
     }
-    
+
+    private let minDayColumnWidth: CGFloat = 70
+    private let timeColumnWidth: CGFloat = 40
+    private let columnSpacing: CGFloat = 10
+
+    /// Sum of every fixed width/padding/spacing in a table row other than the 7 day columns themselves
+    /// (time column + inter-column spacing + the ScrollView's own padding), so the day column
+    /// width can be solved for from the available viewport width.
+    private var nonColumnWidth: CGFloat {
+        timeColumnWidth + columnSpacing * 8 + 20
+    }
+
+    private func dayColumnWidth(for availableWidth: CGFloat) -> CGFloat {
+        let width = (availableWidth - nonColumnWidth) / 7
+        return max(minDayColumnWidth, width)
+    }
+
     init() {
         UIScrollView.appearance().bounces = false
     }
@@ -69,60 +85,64 @@ struct Schedule: View {
     }
     
     private var scheduleTable: some View {
-        VStack {
-            ScrollView(.horizontal, showsIndicators: false) {
-                let days = 0...7
-                HStack(spacing: 10) {
-                    ForEach(days, id: \.self) { day in
-                        DayCard(day: day)
-                    }
-                }
-                .padding(10)
-                
-                
-                ScrollView(.vertical, showsIndicators: false) {
-                    let periods = 1...13
+        GeometryReader { geometry in
+            let columnWidth = dayColumnWidth(for: geometry.size.width)
+            let daysWidth = columnWidth * 7 + columnSpacing * 6
+
+            VStack {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    let days = 0...7
                     HStack(spacing: 10) {
-                        VStack {
-                            ForEach(periods, id: \.self) { period in
-                                TimeCard(time: period)
-                            }
+                        ForEach(days, id: \.self) { day in
+                            DayCard(day: day, width: columnWidth)
                         }
-                        .frame(width: 40)
-                        
-                        
+                    }
+                    .padding(.top, 10)
+
+
+                    ScrollView(.vertical, showsIndicators: false) {
+                        let periods = 1...13
                         HStack(spacing: 10) {
-                            ForEach(days.dropFirst(), id: \.self) { day in
-                                VStack(alignment: .leading, spacing: 0) {
-                                    ZStack(alignment: .top) {
-                                        Color.clear
-                                            .frame(height: CGFloat(1420))
-                                        let today = processedPeriods.filter { $0.day == day }
-                                        ForEach(today) { period in
-                                            let start = period.range.lowerBound
-                                            
-                                            Card(period: period)
-                                                .offset(y: CGFloat((start - 1) * 110))
+                            VStack(spacing: 10) {
+                                ForEach(periods, id: \.self) { period in
+                                    TimeCard(time: period)
+                                }
+                            }
+                            .frame(width: 40)
+
+
+                            HStack(spacing: 10) {
+                                ForEach(days.dropFirst(), id: \.self) { day in
+                                    VStack(alignment: .leading, spacing: 0) {
+                                        ZStack(alignment: .top) {
+                                            Color.clear
+                                                .frame(height: CGFloat(1420))
+                                            let today = processedPeriods.filter { $0.day == day }
+                                            ForEach(today) { period in
+                                                let start = period.range.lowerBound
+
+                                                Card(period: period, width: columnWidth)
+                                                    .offset(y: CGFloat((start - 1) * 110))
+                                            }
                                         }
                                     }
                                 }
                             }
+                            .frame(width: daysWidth, height: 1420, alignment: .top)
                         }
-                        .frame(width: 550, height: 1420, alignment: .top)
+                        .padding(.horizontal, 10)
+                        .padding(.bottom, 10)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.bottom, 10)
+
                 }
-                
+                .clipShape(.rect(cornerRadius: 30))
             }
-            .clipShape(.rect(cornerRadius: 30))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 30)
+                    .fill(elementBgColor)
+            )
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    
-        .background(
-            RoundedRectangle(cornerRadius: 30)
-                .fill(elementBgColor)
-        )
         .padding(.bottom, 100)
     }
     
