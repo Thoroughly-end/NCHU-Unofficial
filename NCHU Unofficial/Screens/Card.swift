@@ -10,7 +10,7 @@ import SwiftUI
 struct Card: View {
     let period: Period
     var width: CGFloat = 70
-    @State private var bgColor: Color = .blue
+    @Binding var bgColor: Color
 
     var height: CGFloat {
         let duration: Int = period.range.upperBound - period.range.lowerBound + 1
@@ -37,17 +37,9 @@ struct Card: View {
         .frame(width: width, height: height)
         .background(bgColor.opacity(0.6))
         .cornerRadius(12)
-        .onAppear {
-            bgColor = ramdomColor()
+        .onTapGesture {
+            bgColor = Schedule.ramdomColor()
         }
-    }
-    
-    private func ramdomColor() -> Color {
-        return Color(
-            hue: Double.random(in: 0...1),
-            saturation: Double.random(in: 0.5...0.7),
-            brightness: Double.random(in: 0.8...0.9)
-        )
     }
 }
 

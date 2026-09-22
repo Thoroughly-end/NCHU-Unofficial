@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ScheduleData: Codable, Equatable {
+struct ScheduleData: Codable, Equatable, Hashable {
     var name: String?
     var teacher: String?
     var location: String?

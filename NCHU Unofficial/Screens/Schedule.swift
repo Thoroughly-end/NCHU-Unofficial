@@ -13,6 +13,7 @@ struct Schedule: View {
     @EnvironmentObject var loginManager: LoginService
     @State var backgroundColor = UIColor(named: "BackgroundColor") ?? UIColor.systemBackground
     let elementBgColor = Color("ElementBackgroundColor")
+    @State var colorTable: [ScheduleData: Color] = [:]
     
     private var processedPeriods: [Period] {
         guard !dataManager.scheduleList.items.isEmpty else { return [] }
@@ -120,8 +121,8 @@ struct Schedule: View {
                                             let today = processedPeriods.filter { $0.day == day }
                                             ForEach(today) { period in
                                                 let start = period.range.lowerBound
-
-                                                Card(period: period, width: columnWidth)
+                                                
+                                                Card(period: period, width: columnWidth, bgColor: Binding(get: { colorTable[period.info] ?? .gray }, set: { colorTable[period.info] = $0 }))
                                                     .offset(y: CGFloat((start - 1) * 110))
                                             }
                                         }
@@ -144,6 +145,19 @@ struct Schedule: View {
             )
         }
         .padding(.bottom, 100)
+        .onAppear() {
+            for element in processedPeriods {
+                colorTable.updateValue(Schedule.ramdomColor(), forKey: element.info)
+            }
+        }
+    }
+    
+    static func ramdomColor() -> Color {
+        return Color(
+            hue: Double.random(in: 0...1),
+            saturation: Double.random(in: 0.5...0.7),
+            brightness: Double.random(in: 0.8...0.9)
+        )
     }
     
     private func initialLoad() {
