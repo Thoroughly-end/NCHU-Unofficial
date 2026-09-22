@@ -13,20 +13,32 @@ class CourseData: Identifiable, ObservableObject {
     var name: String
     @Published var announcements: [AnnouncementData]
     @Published var homeworks: [Homework]
+    @Published var materials: [Material]
     
     init(id: Int, name: String) {
         self.id = id
         self.name = name
         self.announcements = []
         self.homeworks = []
+        self.materials = []
     }
     
     func addAnnouncement(_ announcement: AnnouncementData) {
-        self.announcements.append(announcement)
+        DispatchQueue.main.async {
+            self.announcements.append(announcement)
+        }
     }
-    
+
     func addHomework(_ homework: Homework) {
-        self.homeworks.append(homework)
+        DispatchQueue.main.async {
+            self.homeworks.append(homework)
+        }
+    }
+
+    func addMaterial(_ material: Material) {
+        DispatchQueue.main.async {
+            self.materials.append(material)
+        }
     }
     
     static func getRecentAnnouncements(from courses: [CourseData]) -> [AnnouncementData] {

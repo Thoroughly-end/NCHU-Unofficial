@@ -104,7 +104,8 @@ class AnnouncementService {
             let fileLinks = try document.select("div.fs-list.fs-filelist a")
             
             for link in fileLinks {
-                let fileName = try link.text().trimmingCharacters(in: .whitespacesAndNewlines)
+                let rawFileName = try link.select("span.text").first()?.ownText() ?? link.text()
+                let fileName = rawFileName.trimmingCharacters(in: .whitespacesAndNewlines)
                 let fileUrl = try link.attr("href")
                 let fullFileUrl = baseURL + fileUrl
                 

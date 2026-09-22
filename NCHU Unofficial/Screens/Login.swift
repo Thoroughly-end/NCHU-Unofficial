@@ -177,8 +177,12 @@ private struct FloatingLabelField: View {
             Group {
                 if isSecure {
                     SecureField("", text: $text)
+                        .textContentType(.password)
                 } else {
                     TextField("", text: $text)
+                        .textContentType(.username)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
                 }
             }
             .focused(focusBinding, equals: field)

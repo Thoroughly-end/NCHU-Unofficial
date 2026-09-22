@@ -115,4 +115,5 @@ struct AllCourses: View {
 #Preview {
     ContentView()
         .environmentObject(DataManager())
+        .environmentObject(LoginService())
 }

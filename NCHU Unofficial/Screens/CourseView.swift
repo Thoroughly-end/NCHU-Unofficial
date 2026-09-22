@@ -13,19 +13,23 @@ struct CourseView: View {
     var course: CourseData
     @State var selectedAnnouncement: AnnouncementData? = nil
     @State var selectedHomework: Homework? = nil
+    @State var selectedMaterial: Material? = nil
     @State private var isLoading: Bool = false
     
     var body: some View {
         ZStack {
             Color(backgroundColor).ignoresSafeArea()
-            VStack(spacing: 20) {
-                headerSection
-                announcementsSection
-                homeworkSection
-                footerSection
-                Spacer()
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 20) {
+                    headerSection
+                    matetialSection
+                    announcementsSection
+                    homeworkSection
+                    footerSection
+                    Spacer()
+                }
+                .padding(.horizontal, 30)
             }
-            .padding(.horizontal, 30)
         }
         .ignoresSafeArea(.all, edges: .bottom)
         .sheet(item: $selectedAnnouncement) { announcement in
@@ -38,7 +42,11 @@ struct CourseView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-        
+        .sheet(item: $selectedMaterial) { material in
+            MaterialDetailView(material: material, isLoading: $isLoading)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
     }
     
     var headerSection: some View {
@@ -171,6 +179,54 @@ struct CourseView: View {
         }
     }
     
+    var matetialSection: some View {
+        VStack {
+            VStack(spacing: 20) {
+                HStack {
+                    Image(systemName: "books.vertical.fill")
+                        .foregroundStyle(.primary)
+                        .font(.title2)
+                    Text("Material")
+                        .font(.title2.bold())
+                    Spacer()
+                }
+                
+                ScrollView(.vertical) {
+                    ForEach(Array(course.materials.enumerated()), id: \.element.id) { index, material in
+                        Button{
+                            selectedMaterial = material
+                            isLoading = true
+                            fetchMaterialDetail()
+                        } label: {
+                            VStack(alignment: .leading) {
+                                Text(material.title)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+                                Text(material.updateDate, format: .dateTime.month().day().hour().minute())
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: 80, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        
+                        if index < course.announcements.count - 1 {
+                            Divider().padding(.vertical, 4)
+                        }
+                    }
+                }
+            }
+            .padding()
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 30)
+            .fill(elementBgColor)
+        )
+        .frame(height: 240, alignment: .init(horizontal: .leading, vertical: .top))
+    }
+    
     private func fetchAnnouncementDetail() {
         guard isLoading else { return }
         
@@ -181,6 +237,23 @@ struct CourseView: View {
             }
             Task {
                 await ILearningScraper.shared.fetchAnnouncementContent(for: announcement)
+                await MainActor.run {
+                    isLoading = false
+                }
+            }
+        }
+    }
+    
+    private func fetchMaterialDetail() {
+        guard isLoading else { return }
+        
+        if let material = selectedMaterial {
+            guard material.pptxUrl == nil && material.pdfUrl == nil && material.attachments.isEmpty else {
+                isLoading = false
+                return
+            }
+            Task {
+                await ILearningScraper.shared.fetchMaterialDetail(material: material)
                 await MainActor.run {
                     isLoading = false
                 }
@@ -203,6 +276,155 @@ struct CourseView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+struct MaterialDetailView: View {
+    @ObservedObject var material: Material
+    @State private var downloadingKey: String? = nil
+    @Binding var isLoading: Bool
+
+    var body: some View {
+        if isLoading {
+            ProgressView()
+                .scaleEffect(1.5)
+        } else {
+            NavigationStack {
+                VStack {
+                    ScrollView(.vertical, showsIndicators: true) {
+                        VStack(alignment: .leading, spacing: 20) {
+                            Text(material.title)
+                                .font(.body)
+                                .multilineTextAlignment(.leading)
+                            if !material.downloadable {
+                                Text("This material can not be download")
+                            } else {
+                                HStack(spacing: 16) {
+                                    if let pptxUrl = material.pptxUrl {
+                                        downloadIconButton(url: pptxUrl, fileExtension: "pptx")
+                                    }
+                                    if let pdfUrl = material.pdfUrl {
+                                        downloadIconButton(url: pdfUrl, fileExtension: "pdf")
+                                    }
+                                }
+                                if !material.attachments.isEmpty {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Attachments：")
+                                            .font(.footnote)
+                                            .foregroundColor(Color.primary)
+                                            .padding(.bottom, 4)
+                                        ForEach(material.attachments) { attachment in
+                                            Button {
+                                                downloadAndShare(name: attachment.name, url: attachment.url)
+                                            } label: {
+                                                VStack {
+                                                    HStack {
+                                                        if downloadingKey == attachment.url {
+                                                            ProgressView()
+                                                                .scaleEffect(0.8)
+                                                                .frame(width: 20, height: 20)
+                                                        } else {
+                                                            Image(systemName: "doc.text")
+                                                                .foregroundColor(.gray)
+                                                        }
+
+                                                        Text(attachment.name)
+                                                            .font(.caption)
+                                                            .foregroundColor(.blue)
+                                                            .underline()
+                                                            .lineLimit(1)
+                                                    }
+                                                    .padding(4)
+                                                }
+                                                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 8))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .navigationTitle(material.title)
+                .navigationBarTitleDisplayMode(.inline)
+                .padding(20)
+                .ignoresSafeArea(.all, edges: .bottom)
+            }
+        }
+    }
+
+    @ViewBuilder
+    func downloadIconButton(url: String, fileExtension: String) -> some View {
+        Button {
+            downloadAndShare(name: fileName(from: url, fileExtension: fileExtension), url: url)
+        } label: {
+            if downloadingKey == url {
+                ProgressView()
+                    .scaleEffect(1.0)
+                    .frame(width: 32, height: 32)
+            } else {
+                Image(systemName: "arrow.down.circle")
+                    .foregroundColor(.blue)
+                    .font(.system(size: 28))
+            }
+        }
+        .frame(width: 64, height: 64)
+        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+    }
+
+    func fileName(from urlString: String, fileExtension: String) -> String {
+        let base: String
+        if let url = URL(string: urlString), !url.lastPathComponent.isEmpty {
+            base = url.lastPathComponent.removingPercentEncoding ?? url.lastPathComponent
+        } else {
+            base = material.title
+        }
+        let suffix = ".\(fileExtension)"
+        return base.lowercased().hasSuffix(suffix) ? base : base + suffix
+    }
+
+    func downloadAndShare(name: String, url: String) {
+        guard downloadingKey == nil else { return }
+        downloadingKey = url
+        let attachment = Attachment(name: name, url: url)
+
+        Task {
+            if let localFileURL = await ILearningScraper.shared.download(for: attachment) {
+
+                await MainActor.run {
+                    presentShareSheet(url: localFileURL)
+                    downloadingKey = nil
+                }
+
+            } else {
+                await MainActor.run {
+                    downloadingKey = nil
+                    print("Fail to download attachment")
+                }
+            }
+        }
+    }
+
+    func presentShareSheet(url: URL) {
+        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            
+            var topVC = rootVC
+            while let presented = topVC.presentedViewController {
+                topVC = presented
+            }
+            
+            if let popover = activityVC.popoverPresentationController {
+                popover.sourceView = topVC.view
+                popover.sourceRect = CGRect(x: topVC.view.bounds.midX, y: topVC.view.bounds.midY, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            
+            topVC.present(activityVC, animated: true)
         }
     }
 }
@@ -423,5 +645,15 @@ struct HomeworkDetailView: View {
     hw2.dueDate = Calendar.current.date(byAdding: .day, value: 7, to: Date()) // Future
     course.addHomework(hw2)
     
+    let m1 = Material(url: "https://example.com/material1", courseID: 123, title: "Week 1 Slides", updateDate: Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date())
+    course.addMaterial(m1)
+
+    let m2 = Material(url: "https://example.com/material2", courseID: 123, title: "Week 2 Lecture Notes", updateDate: Date())
+    course.addMaterial(m2)
+
+    Task { @MainActor in
+        m1.setPDFandAttachments(pptxUrl: "https://example.com/material1.pptx", pdfUrl: nil, attachments: [])
+    }
+
     return CourseView(course: course)
 }

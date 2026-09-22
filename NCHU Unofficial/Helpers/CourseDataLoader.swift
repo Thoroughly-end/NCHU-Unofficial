@@ -54,6 +54,9 @@ class CourseDataLoader: ObservableObject {
                     group.addTask {
                         await ILearningScraper.shared.fetchHomeworkList(course: course)
                     }
+                    group.addTask {
+                        await ILearningScraper.shared.fetchMaterialList(course: course)
+                    }
                 }
             }
             

@@ -56,10 +56,10 @@ class HomeworkService {
                         id = Int(detailPath.components(separatedBy: "/").last ?? "0") ?? 0
                     } else if i == 3 {
                         let startStr = try cell.select("div.text-overflow").text()
-                        startDate = parseMessyDate(startStr)
+                        startDate = MessyDateHelper.shared.parseMessyDate(startStr)
                     } else if i == 4 {
                         let dueStr = try cell.select("div.text-overflow").text()
-                        dueDate = parseMessyDate(dueStr)
+                        dueDate = MessyDateHelper.shared.parseMessyDate(dueStr)
 
                     } else if i == 6 {
                         let scoreStr = try cell.select("div.text-overflow").text()
@@ -113,8 +113,8 @@ class HomeworkService {
                 explaination = cleanTextWithNewlines
             }
             
-            let startDate = parseMessyDate(startStr)
-            let dueDate = parseMessyDate(dueStr)
+            let startDate = MessyDateHelper.shared.parseMessyDate(startStr)
+            let dueDate = MessyDateHelper.shared.parseMessyDate(dueStr)
             
             homework.setExplanationAndPropotion(explanation: explaination, proportion: proportion)
             homework.setStartAndDueDate(startDate: startDate, dueDate: dueDate)
@@ -123,32 +123,5 @@ class HomeworkService {
             print("Failed to fetch homework detail：\(error)")
             return
         }
-    }
-    
-    private func parseMessyDate(_ dateString: String) -> Date {
-        let cleanedString = dateString.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(identifier: "Asia/Taipei")
-        
-        let possibleFormats = [
-            "yyyy-MM-dd HH:mm:ss",
-            "yyyy-MM-dd HH:mm",
-            "yyyy-MM-dd",
-            "yyyy/MM/dd HH:mm",
-            "yyyy/MM/dd",
-            "MM-dd HH:mm"
-        ]
-        
-        for format in possibleFormats {
-            formatter.dateFormat = format
-            if let date = formatter.date(from: cleanedString) {
-                return date
-            }
-        }
-        
-        print("Unknown date format: \(cleanedString)")
-        return Date()
     }
 }

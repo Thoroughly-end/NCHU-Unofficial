@@ -13,7 +13,7 @@ struct Attachment: Identifiable {
     let url: String
     
     init(name: String, url: String) {
-        self.name = name.removingBracket()
+        self.name = name
         self.url = url
     }
 }

@@ -36,4 +36,5 @@ struct TestPage: View {
 #Preview {
     TestPage()
         .environmentObject(DataManager())
+        .environmentObject(LoginService())
 }

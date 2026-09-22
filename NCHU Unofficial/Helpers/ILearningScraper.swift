@@ -12,6 +12,7 @@ class ILearningScraper {
     private let courseService = CourseService()
     private let announcementService = AnnouncementService()
     private let homeworkService = HomeworkService()
+    private let materialService = MaterialService()
     
     func fetchCourses() async -> [CourseData] {
         var courses: [CourseData] = []
@@ -73,6 +74,20 @@ class ILearningScraper {
         let isValid = await SessionManager.shared.verifyCookieStatus()
         if isValid {
             await homeworkService.fetchHomeworkDetail(homework: homework)
+        }
+    }
+    
+    func fetchMaterialList(course: CourseData) async {
+        let isValid = await SessionManager.shared.verifyCookieStatus()
+        if isValid {
+            await materialService.fetchMaterialList(for: course)
+        }
+    }
+    
+    func fetchMaterialDetail(material: Material) async {
+        let isValid = await SessionManager.shared.verifyCookieStatus()
+        if isValid {
+            await materialService.fetchMaterialDetail(for: material)
         }
     }
     
