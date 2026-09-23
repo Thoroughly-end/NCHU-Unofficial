@@ -33,9 +33,7 @@ class CourseDataLoader: ObservableObject {
             
             guard isValid else {
                 print("Session invalid, need to re-login")
-                // Clear cookies but don't logout immediately
-                CookieManager.shared.clearCookies()
-                loginManager.isLoggedIn = false
+                loginManager.logout()
                 return
             }
             

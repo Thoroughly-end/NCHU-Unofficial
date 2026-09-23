@@ -77,8 +77,12 @@ class AnnouncementService {
     }
     
     func fetchAnnouncementContent(for course: CourseData) async {
-        for announcement in course.announcements {
-            await self.fetchAnnouncementContent(for: announcement)
+        await withTaskGroup(of: Void.self) { group in
+            for announcement in course.announcements {
+                group.addTask {
+                    await self.fetchAnnouncementContent(for: announcement)
+                }
+            }
         }
     }
     
@@ -126,7 +130,7 @@ class AnnouncementService {
            
             print("Got \(extractedAttachments.count) attachments")
             
-            try? await Task.sleep(nanoseconds: 500000000)
+            //try? await Task.sleep(nanoseconds: 500000000)
             
         } catch {
             print("Fetch \(announcement.title) content failed: \(error.localizedDescription)")

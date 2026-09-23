@@ -118,7 +118,6 @@ class HomeworkService {
             
             homework.setExplanationAndPropotion(explanation: explaination, proportion: proportion)
             homework.setStartAndDueDate(startDate: startDate, dueDate: dueDate)
-            try? await Task.sleep(nanoseconds: AppConstants.Network.requestDelay)
         } catch {
             print("Failed to fetch homework detail：\(error)")
             return

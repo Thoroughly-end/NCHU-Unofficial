@@ -29,7 +29,6 @@ class Material: ObservableObject, Identifiable {
         self.updateDate = updateDate
     }
 
-    @MainActor
     func setPDFandAttachments(pptxUrl: String?, pdfUrl: String?, attachments: [Attachment]) {
         DispatchQueue.main.async {
             self.downloadable = true

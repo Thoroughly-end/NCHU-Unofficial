@@ -14,8 +14,20 @@ struct CourseView: View {
     @State var selectedAnnouncement: AnnouncementData? = nil
     @State var selectedHomework: Homework? = nil
     @State var selectedMaterial: Material? = nil
-    @State private var isLoading: Bool = false
     
+    @State private var isLoading: Bool = false
+    @State private var pendingDetail: PendingDetail? = nil
+
+    private enum PendingDetail {
+        case announcement(AnnouncementData)
+        case homework(Homework)
+        case material(Material)
+    }
+
+    private var isDetailSheetPresented: Bool {
+        selectedAnnouncement != nil || selectedHomework != nil || selectedMaterial != nil
+    }
+
     var body: some View {
         ZStack {
             Color(backgroundColor).ignoresSafeArea()
@@ -32,20 +44,51 @@ struct CourseView: View {
             }
         }
         .ignoresSafeArea(.all, edges: .bottom)
-        .sheet(item: $selectedAnnouncement) { announcement in
+        .sheet(item: $selectedAnnouncement, onDismiss: resolvePendingDetailIfNeeded) { announcement in
             AnnouncementDetailView(announcement: announcement, isLoading: $isLoading)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-        .sheet(item: $selectedHomework) { homework in
+        .sheet(item: $selectedHomework, onDismiss: resolvePendingDetailIfNeeded) { homework in
             HomeworkDetailView(homework: homework, isLoading: $isLoading)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-        .sheet(item: $selectedMaterial) { material in
+        .sheet(item: $selectedMaterial, onDismiss: resolvePendingDetailIfNeeded) { material in
             MaterialDetailView(material: material, isLoading: $isLoading)
-                .presentationDetents([.medium, .large])
+                .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
+        }
+    }
+
+    private func selectDetail(_ detail: PendingDetail) {
+        guard !isDetailSheetPresented else {
+            pendingDetail = detail
+            return
+        }
+        present(detail)
+    }
+
+    private func resolvePendingDetailIfNeeded() {
+        guard !isDetailSheetPresented, let detail = pendingDetail else { return }
+        pendingDetail = nil
+        present(detail)
+    }
+
+    private func present(_ detail: PendingDetail) {
+        switch detail {
+        case .announcement(let announcement):
+            selectedAnnouncement = announcement
+            isLoading = true
+            fetchAnnouncementDetail()
+        case .homework(let homework):
+            selectedHomework = homework
+            isLoading = true
+            fetchHomeworkDetail()
+        case .material(let material):
+            selectedMaterial = material
+            isLoading = true
+            fetchMaterialDetail()
         }
     }
     
@@ -72,9 +115,7 @@ struct CourseView: View {
                 ScrollView(.vertical) {
                     ForEach(Array(course.announcements.enumerated()), id: \.element.id) { index, announcement in
                         Button{
-                            selectedAnnouncement = announcement
-                            isLoading = true
-                            fetchAnnouncementDetail()
+                            selectDetail(.announcement(announcement))
                         } label: {
                             VStack(alignment: .leading) {
                                 Text(announcement.title)
@@ -133,9 +174,7 @@ struct CourseView: View {
                     ScrollView(.vertical) {
                         ForEach(Array(course.homeworks.enumerated()), id: \.element.id) { index, homework in
                             Button {
-                                selectedHomework = homework
-                                isLoading = true
-                                fetchHomeworkDetail()
+                                selectDetail(.homework(homework))
                             } label: {
                                 VStack(alignment: .leading) {
                                     Text(homework.name)
@@ -194,9 +233,7 @@ struct CourseView: View {
                 ScrollView(.vertical) {
                     ForEach(Array(course.materials.enumerated()), id: \.element.id) { index, material in
                         Button{
-                            selectedMaterial = material
-                            isLoading = true
-                            fetchMaterialDetail()
+                            selectDetail(.material(material))
                         } label: {
                             VStack(alignment: .leading) {
                                 Text(material.title)

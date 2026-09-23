@@ -19,8 +19,6 @@ class ILearningScraper {
         let isValid = await SessionManager.shared.verifyCookieStatus()
         if isValid {
             courses = await courseService.fetchCourses()
-        } else {
-            courses = await courseService.fetchCourses()
         }
         return courses
     }
@@ -30,8 +28,6 @@ class ILearningScraper {
         let isValid = await SessionManager.shared.verifyCookieStatus()
         if isValid {
             results = await announcementService.fetchLatestAnnouncements()
-        } else {
-            results = await announcementService.fetchLatestAnnouncements()
         }
         return results
     }
@@ -40,16 +36,12 @@ class ILearningScraper {
         let isValid = await SessionManager.shared.verifyCookieStatus()
         if isValid {
             await announcementService.fetchAnnouncementContent(for: course)
-        } else {
-            await announcementService.fetchAnnouncementContent(for: course)
         }
     }
     
     func fetchAnnouncementContent(for announcement: AnnouncementData) async {
         let isValid = await SessionManager.shared.verifyCookieStatus()
         if isValid {
-            await announcementService.fetchAnnouncementContent(for: announcement)
-        } else {
             await announcementService.fetchAnnouncementContent(for: announcement)
         }
     }
@@ -59,7 +51,7 @@ class ILearningScraper {
         if isValid {
             return await announcementService.download(for: attachment)
         } else {
-            return await announcementService.download(for: attachment)
+            return nil
         }
     }
     
