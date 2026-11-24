@@ -21,6 +21,10 @@ class LoginService: ObservableObject {
     // Continuation to wait for login completion
     private var loginContinuation: CheckedContinuation<Bool, Never>?
     
+    var hasActiveLoginSession: Bool {
+        return loginContinuation != nil
+    }
+    
     func logout() {
         isLoggedIn = false
         hasCportalCookies = false
@@ -40,7 +44,7 @@ class LoginService: ObservableObject {
     /// - Returns: `true` if login succeeded, `false` if cancelled or failed
     func login() async -> Bool {
         // Don't start a new login if one is already in progress
-        guard loginContinuation == nil else {
+        guard loginContinuation == nil, !showLoginSheet else {
             print("Login already in progress")
             return false
         }
@@ -56,6 +60,11 @@ class LoginService: ObservableObject {
     
     /// Call this when login succeeds (from HiddenWebView's handleLoginSuccess)
     func completeLogin(success: Bool) {
+        guard loginContinuation != nil else {
+            // No active login session
+            return
+        }
+        
         isLoggingIn = false
         
         if success {
@@ -69,6 +78,11 @@ class LoginService: ObservableObject {
     
     /// Call this when the user cancels the login sheet
     func cancelLogin() {
+        guard loginContinuation != nil else {
+            // Already cancelled or completed
+            return
+        }
+        
         isLoggingIn = false
         showLoginSheet = false
         isLoggedIn = false
@@ -78,6 +92,11 @@ class LoginService: ObservableObject {
     }
     
     func stopLogin() {
+        guard loginContinuation != nil else {
+            // Already stopped or completed
+            return
+        }
+        
         isLoggingIn = false
         isLoggedIn = false
         

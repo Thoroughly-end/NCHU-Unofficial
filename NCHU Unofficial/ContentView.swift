@@ -155,8 +155,8 @@ struct ContentView: View {
             .allowsHitTesting(false)
         }
         .onAppear() {
-            Task {
-                if !loginManager.isLoggedIn {
+            if !loginManager.isLoggedIn {
+                Task{
                     let success = await loginManager.login()
                     if success {
                         print("Login success: Homepage")
@@ -167,6 +167,11 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $loginManager.showLoginSheet) {
+            // onDismiss: 當 sheet 被關閉時（無論是通過按鈕還是手勢），確保清理狀態
+            if loginManager.hasActiveLoginSession {
+                loginManager.cancelLogin()
+            }
+        } content: {
             NavigationView {
                 Login(showAlert: $showAlert, invalidCredentialAlert: $showInvalidCredentialAlert)
                     .navigationTitle("Login")
@@ -178,6 +183,7 @@ struct ContentView: View {
                             }
                         }
                     }
+                    .interactiveDismissDisabled(loginManager.isLoggingIn)
             }
         }
     }

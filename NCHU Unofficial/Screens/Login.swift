@@ -168,24 +168,38 @@ private struct FloatingLabelField: View {
     
     var body: some View {
         ZStack(alignment: .leading) {
+            // Floating label
             Text(title)
                 .foregroundStyle(.gray)
                 .font(isFloating ? .caption : .body)
                 .offset(y: isFloating ? -22 : -7)
                 .animation(.easeInOut(duration: 0.2), value: isFloating)
+                .allowsHitTesting(false)
             
+            // Input field
             Group {
                 if isSecure {
-                    SecureField("", text: $text)
+                    SecureField("", text: $text, prompt: Text(""))
                         .textContentType(.password)
+                        .submitLabel(.done)
                 } else {
-                    TextField("", text: $text)
+                    TextField("", text: $text, prompt: Text(""))
                         .textContentType(.username)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .submitLabel(.next)
+                        .keyboardType(.emailAddress)  // 改用 emailAddress 以觸發 AutoFill
                 }
             }
             .focused(focusBinding, equals: field)
+            .frame(height: 30)  // 明確設定高度，讓 iOS 更容易識別
+            .onSubmit {
+                if !isSecure {
+                    focusBinding.wrappedValue = .password
+                } else {
+                    focusBinding.wrappedValue = nil
+                }
+            }
         }
         .padding(.top, 12)
         .frame(maxWidth: .infinity, alignment: .leading)

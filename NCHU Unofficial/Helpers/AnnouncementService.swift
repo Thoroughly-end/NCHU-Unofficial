@@ -6,6 +6,7 @@
 //
 import Foundation
 import SwiftSoup
+import UniformTypeIdentifiers
 
 class AnnouncementService {
     private let baseURL = AppConstants.Network.baseURL
@@ -137,6 +138,46 @@ class AnnouncementService {
         }
     }
     
+    /// Extracts the file name from a Content-Disposition header, handling `filename*=UTF-8''...`,
+    /// percent-encoded names, and raw UTF-8/Big5 bytes that Foundation decoded as Latin-1.
+    static func fileName(fromContentDisposition header: String) -> String? {
+        func value(of key: String) -> String? {
+            let pattern = "\(key)\\s*=\\s*(\"([^\"]*)\"|[^;]*)"
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+                  let match = regex.firstMatch(in: header, range: NSRange(header.startIndex..., in: header)) else {
+                return nil
+            }
+            let quoted = Range(match.range(at: 2), in: header).map { String(header[$0]) }
+            let whole = Range(match.range(at: 1), in: header).map { String(header[$0]) }
+            return (quoted ?? whole)?.trimmingCharacters(in: .whitespaces)
+        }
+
+        // RFC 5987: filename*=charset'lang'percent-encoded
+        if let extended = value(of: "filename\\*") {
+            let parts = extended.split(separator: "'", maxSplits: 2, omittingEmptySubsequences: false)
+            if parts.count == 3 {
+                let encoding: String.Encoding = parts[0].lowercased() == "utf-8" ? .utf8 : .isoLatin1
+                if let decoded = String(parts[2]).removingPercentEncoding,
+                   encoding == .utf8 { return decoded }
+                if let data = String(parts[2]).removingPercentEncoding?.data(using: .isoLatin1),
+                   let decoded = String(data: data, encoding: encoding) { return decoded }
+            }
+        }
+
+        guard var name = value(of: "filename(?!\\*)"), !name.isEmpty else { return nil }
+        if let decoded = name.removingPercentEncoding { name = decoded }
+
+        // Mojibake repair: bytes were read as Latin-1; reinterpret them as UTF-8, then Big5.
+        if name.unicodeScalars.contains(where: { $0.value > 0x7F }),
+           let data = name.data(using: .isoLatin1) {
+            if let utf8 = String(data: data, encoding: .utf8) { return utf8 }
+            let big5 = String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding(
+                CFStringEncoding(CFStringEncodings.big5.rawValue)))
+            if let decoded = String(data: data, encoding: big5) { return decoded }
+        }
+        return name
+    }
+
     func download(for attachment: Attachment) async -> URL? {
         guard let url = URL(string: attachment.url) else { return nil }
                 
@@ -158,7 +199,21 @@ class AnnouncementService {
                 return nil
             }
             
-            let safeFileName = attachment.name.removingPercentEncoding ?? attachment.name
+            // Prefer the real file name sent by the server (Content-Disposition); the passed-in name
+            // may have a guessed extension. suggestedFilename is URL-derived without that header.
+            var fileName = attachment.name
+            if let header = httpResponse.value(forHTTPHeaderField: "Content-Disposition"),
+               let serverName = Self.fileName(fromContentDisposition: header) {
+                fileName = serverName
+            } else if let mime = response.mimeType,
+                      let mimeType = UTType(mimeType: mime),
+                      let mimeExt = mimeType.preferredFilenameExtension,
+                      !(UTType(filenameExtension: (fileName as NSString).pathExtension)?.conforms(to: mimeType) ?? false) {
+                // No server-provided name: correct the extension from the actual content type.
+                fileName = ((fileName as NSString).deletingPathExtension) + "." + mimeExt
+            }
+            let safeFileName = (fileName.removingPercentEncoding ?? fileName)
+                .replacingOccurrences(of: "/", with: "_")
             let destinationURL = cacheDirectory.appendingPathComponent(safeFileName)
             
             if fileManager.fileExists(atPath: destinationURL.path) {

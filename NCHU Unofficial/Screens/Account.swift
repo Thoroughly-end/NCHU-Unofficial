@@ -21,6 +21,7 @@ struct Account: View {
 
 struct UserView: View {
     @EnvironmentObject var loginManager: LoginService
+    @State private var isLoggingIn = false
     var buttonColor: Color {loginManager.isLoggedIn == true ? Color.red : Color.green}
     var body: some View {
         VStack(spacing: 20) {
@@ -30,13 +31,16 @@ struct UserView: View {
                         .font(.title)
                     Spacer()
                     Button(action: {
-                        Task { @MainActor in
+                        guard !isLoggingIn && !loginManager.showLoginSheet else { return }
+                        isLoggingIn = true
+                        Task {
                             let success = await loginManager.login()
                             if success {
                                 print("Login success: Account page")
                             } else {
                                 print("Login failed: Account page")
                             }
+                            isLoggingIn = false
                         }
                     }) {
                         Text("Sign In")
@@ -45,6 +49,7 @@ struct UserView: View {
                             .padding(10)
                     }
                     .glassEffect(.clear.interactive().tint(buttonColor))
+                    .disabled(isLoggingIn || loginManager.showLoginSheet)
                 } else {
                     Image(systemName: "person.crop.circle")
                         .font(.title)

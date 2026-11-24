@@ -413,7 +413,8 @@ struct MaterialDetailView: View {
 
     func fileName(from urlString: String, fileExtension: String) -> String {
         let base: String
-        if let url = URL(string: urlString), !url.lastPathComponent.isEmpty {
+        // Only trust the URL's last component when it looks like a file name (e.g. not a numeric id)
+        if let url = URL(string: urlString), url.lastPathComponent.contains(".") {
             base = url.lastPathComponent.removingPercentEncoding ?? url.lastPathComponent
         } else {
             base = material.title
